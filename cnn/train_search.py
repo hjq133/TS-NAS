@@ -10,7 +10,6 @@ import torchvision.datasets as dset
 import torch.backends.cudnn as cudnn
 
 from model_search import Network
-from arch import Arch
 
 parser = argparse.ArgumentParser("cifar")
 parser.add_argument('--data', type=str, default='../data/cifar10', help='location of the data corpus')
@@ -31,10 +30,7 @@ parser.add_argument('--drop_path_prob', type=float, default=0.3, help='drop path
 parser.add_argument('--exp_path', type=str, default='search', help='experiment name')
 parser.add_argument('--seed', type=int, default=2, help='random seed')
 parser.add_argument('--grad_clip', type=float, default=5, help='gradient clipping range')
-parser.add_argument('--train_portion', type=float, default=0.5, help='portion of training/val splitting')  # 区分训练集和测试集合
-parser.add_argument('--unrolled', action='store_true', default=False, help='use one-step unrolled validation loss')
-parser.add_argument('--arch_lr', type=float, default=3e-4, help='learning rate for arch encoding')
-parser.add_argument('--arch_wd', type=float, default=1e-3, help='weight decay for arch encoding')
+parser.add_argument('--train_portion', type=float, default=0.75, help='portion of training/val splitting')  # 区分训练集和测试集合
 args = parser.parse_args()
 
 args.exp_path += str(args.gpu)
@@ -56,7 +52,6 @@ def main():
     cudnn.enabled = True
     torch.manual_seed(args.seed)
 
-    args.unrolled = True
     logging.info('GPU device = %d' % args.gpu)
     logging.info("args = %s", args)
     criterion = nn.CrossEntropyLoss().to(device)
@@ -82,8 +77,6 @@ def main():
 
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, float(args.epochs), eta_min=args.lr_min)
 
-    arch = Arch(model, args)
-
     for epoch in range(args.epochs):
         scheduler.step()
         lr = scheduler.get_lr()[0]
@@ -93,7 +86,7 @@ def main():
         logging.info('Genotype: %s', genotype)
 
         # training
-        train_acc, train_obj = train(train_queue, valid_queue, model, arch, criterion, optimizer, lr)
+        train_acc, train_obj = train(train_queue, valid_queue, model, criterion, optimizer)
         logging.info('train acc: %f', train_acc)
 
         # validation
@@ -103,24 +96,17 @@ def main():
         utils.save(model, os.path.join(args.exp_path, 'search.pt'))
 
 
-def train(train_queue, valid_queue, model, arch, criterion, optimizer, lr):
+def train(train_queue, model, criterion, optimizer):
     """
-
     :param train_queue: train loader
-    :param valid_queue: validate loader
     :param model: network
-    :param arch: Arch class
     :param criterion:
     :param optimizer:
-    :param lr:
     :return:
     """
     losses = utils.AverageMeter()
     top1 = utils.AverageMeter()
     top5 = utils.AverageMeter()
-
-    valid_iter = iter(valid_queue)
-
     for step, (x, target) in enumerate(train_queue):
 
         batchsz = x.size(0)
@@ -128,16 +114,10 @@ def train(train_queue, valid_queue, model, arch, criterion, optimizer, lr):
 
         # [b, 3, 32, 32], [40]
         x, target = x.to(device), target.cuda(non_blocking=True)
-        x_search, target_search = next(valid_iter)  # [b, 3, 32, 32], [b]
-        x_search, target_search = x_search.to(device), target_search.cuda(non_blocking=True)
-
-        # 1. update alpha
-        arch.step(x, target, x_search, target_search, lr, optimizer, unrolled=args.unrolled)
-
         logits = model(x)
         loss = criterion(logits, target)
 
-        # 2. update weight
+        # update weight
         optimizer.zero_grad()
         loss.backward()
         nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
@@ -167,7 +147,6 @@ def infer(valid_queue, model, criterion):
     top5 = utils.AverageMeter()
 
     model.eval()
-
     with torch.no_grad():
         for step, (x, target) in enumerate(valid_queue):
 

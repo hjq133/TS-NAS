@@ -2,8 +2,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from operations import OPS, FactorizedReduce, ReLUConvBN
-from genotypes import PRIMITIVES, Genotype
-
+from genotypes import PRIMITIVES, Genotype, NAME2ID
 
 class MixedLayer(nn.Module):
     """
@@ -72,7 +71,7 @@ class Cell(nn.Module):
         in order to keep same shape between s1 and s0, we adopt prep0 layer to
         reduce the s0 width by half.
         """
-        super(Cell, self).__init__()
+        super().__init__()
 
         # indicating current cell is reduction or not
         self.reduction = reduction
@@ -100,15 +99,14 @@ class Cell(nn.Module):
             for j in range(2 + i):
                 # for reduction cell, it will reduce the heading 2 inputs only
                 stride = 2 if reduction and j < 2 else 1
-                layer = MixedLayer(c, stride)
-                self.layers.append(layer)
+                self.layers.append([OPS[primitive](c, stride, False) for primitive in PRIMITIVES])
 
-    def forward(self, s0, s1, weights):
+    def forward(self, s0, s1, genotype):
         """
 
         :param s0:
         :param s1:
-        :param weights: [14, 8]
+        :param genotype: [14, 8]
         :return:
         """
         # print('s0:', s0.shape,end='=>')
@@ -120,17 +118,30 @@ class Cell(nn.Module):
 
         states = [s0, s1]
         offset = 0
-        # for each node, receive input from all previous intermediate nodes and s0, s1
-        for i in range(self.steps):  # 4
-            # [40, 16, 32, 32]
-            s = sum(self.layers[offset + j](h, weights[offset + j]) for j, h in enumerate(states))
-            offset += len(states)
-            # append one state since s is the elem-wise addition of all output
-            states.append(s)
-            # print('node:',i, s.shape, self.reduction)
 
+        if self.reduction:
+            op_names, indices = zip(*genotype.reduce)
+            concat = genotype.reduce_concat
+        else:
+            op_names, indices = zip(*genotype.normal)
+            concat = genotype.normal_concat
+
+        # for each node, receive input from all previous intermediate nodes and s0, s1
+        for i in range(self.steps):
+            op1_id = NAME2ID[op_names[2 * i]]
+            op2_id = NAME2ID[op_names[2 * i + 1]]
+            h1 = states[indices[2 * i]]
+            h2 = states[indices[2 * i + 1]]
+            op1 = self.layers[offset + indices[2 * i]][op1_id]
+            op2 = self.layers[offset + indices[2 * i + 1]][op2_id]
+            h1 = op1(h1)
+            h2 = op2(h2)
+
+            s = h1 + h2
+            states += [s]
+            offset += len(states)
         # concat along dim=channel
-        return torch.cat(states[-self.multiplier:], dim=1)  # 6 of [40, 16, 32, 32]
+        return torch.cat([states[i] for i in self._concat], dim=1)  # 6 of [40, 16, 32, 32]
 
 
 class Network(nn.Module):
@@ -149,7 +160,7 @@ class Network(nn.Module):
         :param multiplier: output channel of cell = multiplier * ch
         :param stem_multiplier: output channel of stem net = stem_multiplier * ch
         """
-        super(Network, self).__init__()
+        super().__init__()
 
         self.c = c
         self.num_classes = num_classes

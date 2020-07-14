@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="c914a6f7-4700-45a1-95c7-1460ab13f8af" name="Default Changelist" comment="" />
+    <list default="true" id="c914a6f7-4700-45a1-95c7-1460ab13f8af" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/genotypes.py" beforeDir="false" afterPath="$PROJECT_DIR$/genotypes.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/model_search.py" beforeDir="false" afterPath="$PROJECT_DIR$/model_search.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/train_search.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_search.py" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -13,17 +18,17 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/genotypes.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="441">
-              <caret line="21" column="28" selection-start-line="21" selection-start-column="28" selection-end-line="21" selection-end-column="28" />
+            <state relative-caret-position="294">
+              <caret line="14" selection-start-line="14" selection-end-line="14" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/model.py">
+        <entry file="file://$PROJECT_DIR$/model_search.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="427">
-              <caret line="122" column="34" lean-forward="true" selection-start-line="122" selection-start-column="34" selection-end-line="122" selection-end-column="34" />
+            <state relative-caret-position="481">
+              <caret line="150" lean-forward="true" selection-start-line="150" selection-end-line="150" />
               <folding>
                 <element signature="e#0#12#0" expanded="true" />
               </folding>
@@ -32,10 +37,34 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/model.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="475">
+              <caret line="82" lean-forward="true" selection-start-line="82" selection-end-line="82" />
+              <folding>
+                <element signature="e#0#12#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/train_search.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="966">
+              <caret line="57" column="16" selection-start-line="57" selection-start-column="16" selection-end-line="57" selection-end-column="16" />
+              <folding>
+                <element signature="e#0#26#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/operations.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="195">
-              <caret line="139" column="7" lean-forward="true" selection-start-line="139" selection-start-column="7" selection-end-line="139" selection-end-column="7" />
+            <state relative-caret-position="2898">
+              <caret line="139" column="7" selection-start-line="139" selection-start-column="7" selection-end-line="139" selection-end-column="7" />
               <folding>
                 <element signature="e#0#12#0" expanded="true" />
               </folding>
@@ -46,7 +75,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/train_cifar.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1261">
+            <state relative-caret-position="672">
               <caret line="47" column="22" selection-start-line="47" selection-start-column="22" selection-end-line="47" selection-end-column="22" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
@@ -60,7 +89,15 @@
   <component name="FindInProjectRecents">
     <findStrings>
       <find>C</find>
+      <find>train_portion</find>
+      <find>arch_lr</find>
+      <find>arch_wd</find>
+      <find>unrolled</find>
+      <find>MixedLayer</find>
+      <find>genotype</find>
+      <find>_steps</find>
       <find>multiplier</find>
+      <find>for k</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -72,6 +109,9 @@
         <option value="$PROJECT_DIR$/operations.py" />
         <option value="$PROJECT_DIR$/train_cifar.py" />
         <option value="$PROJECT_DIR$/model.py" />
+        <option value="$PROJECT_DIR$/train_search.py" />
+        <option value="$PROJECT_DIR$/genotypes.py" />
+        <option value="$PROJECT_DIR$/model_search.py" />
       </list>
     </option>
   </component>
@@ -82,11 +122,11 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="719" />
+  <component name="ProjectFrameBounds" extendedState="7">
+    <option name="x" value="53" />
     <option name="y" value="27" />
-    <option name="width" value="1400" />
-    <option name="height" value="789" />
+    <option name="width" value="1669" />
+    <option name="height" value="941" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -139,18 +179,19 @@
       <option name="presentableId" value="Default" />
       <updated>1594643947936</updated>
       <workItem from="1594643950385" duration="7741000" />
-      <workItem from="1594687284204" duration="6144000" />
+      <workItem from="1594687284204" duration="17898000" />
+      <workItem from="1594725616311" duration="1896000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="13885000" />
+    <option name="totallyTimeSpent" value="27535000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="53" y="25" width="1867" height="1055" extended-state="7" />
+    <frame x="53" y="25" width="1867" height="1055" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.19412091" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.1974487" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -210,9 +251,36 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/genotypes.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="294">
+          <caret line="14" selection-start-line="14" selection-end-line="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/train_search.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="966">
+          <caret line="57" column="16" selection-start-line="57" selection-start-column="16" selection-end-line="57" selection-end-column="16" />
+          <folding>
+            <element signature="e#0#26#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/operations.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2898">
+          <caret line="139" column="7" selection-start-line="139" selection-start-column="7" selection-end-line="139" selection-end-column="7" />
+          <folding>
+            <element signature="e#0#12#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/train_cifar.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1261">
+        <state relative-caret-position="672">
           <caret line="47" column="22" selection-start-line="47" selection-start-column="22" selection-end-line="47" selection-end-column="22" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
@@ -220,27 +288,20 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/operations.py">
+    <entry file="file://$PROJECT_DIR$/model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="195">
-          <caret line="139" column="7" lean-forward="true" selection-start-line="139" selection-start-column="7" selection-end-line="139" selection-end-column="7" />
+        <state relative-caret-position="475">
+          <caret line="82" lean-forward="true" selection-start-line="82" selection-end-line="82" />
           <folding>
             <element signature="e#0#12#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/genotypes.py">
+    <entry file="file://$PROJECT_DIR$/model_search.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="441">
-          <caret line="21" column="28" selection-start-line="21" selection-start-column="28" selection-end-line="21" selection-end-column="28" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/model.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="427">
-          <caret line="122" column="34" lean-forward="true" selection-start-line="122" selection-start-column="34" selection-end-line="122" selection-end-column="34" />
+        <state relative-caret-position="481">
+          <caret line="150" lean-forward="true" selection-start-line="150" selection-end-line="150" />
           <folding>
             <element signature="e#0#12#0" expanded="true" />
           </folding>
