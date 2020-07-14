@@ -14,10 +14,10 @@ class Cell(nn.Module):
         :param reduction:
         :param reduction_prev:
         """
-        super(Cell, self).__init__()
+        super().__init__()
         print(C_prev_prev, C_prev, C)
-        if reduction_prev:
-            self.preprocess0 = FactorizedReduce(C_prev_prev, C)
+        if reduction_prev:  # 如果k-1是reduction cell，则我们必须把k-2的输出和k-1的输出统一(统一height和width)
+            self.preprocess0 = FactorizedReduce(C_prev_prev, C)  # 这里就重新规范了k-2的输出
         else:
             self.preprocess0 = ReLUConvBN(C_prev_prev, C, kernel_size=1, stride=1, padding=0)
         self.preprocess1 = ReLUConvBN(C_prev, C, kernel_size=1, stride=1, padding=0)
@@ -28,7 +28,7 @@ class Cell(nn.Module):
         else:
             op_names, indices = zip(*genotype.normal)
             concat = genotype.normal_concat
-        self._compile(C, op_names, indices, concat, reduction)
+        self._compile(C, op_names, indices, concat, reduction)  # 搭建这一个cell网络
 
     def _compile(self, C, op_names, indices, concat, reduction):
         """
@@ -43,7 +43,7 @@ class Cell(nn.Module):
 
         self._steps = len(op_names) // 2
         self._concat = concat
-        self.multiplier = len(concat)
+        self.multiplier = len(concat)  # 决定了输出的通道数
 
         self._ops = nn.ModuleList()
         for name, index in zip(op_names, indices):
@@ -86,7 +86,7 @@ class AuxiliaryHeadCIFAR(nn.Module):  # 辅助层，用于加速初期训练速�
 
     def __init__(self, C, num_classes):
         """assuming input size 8x8"""
-        super(AuxiliaryHeadCIFAR, self).__init__()
+        super().__init__()
 
         self.features = nn.Sequential(
             nn.ReLU(inplace=True),
@@ -150,7 +150,7 @@ class NetworkCIFAR(nn.Module):
         reduction_prev = False
         for i in range(layers):
             if i in [layers // 3, 2 * layers // 3]:  # 总共有2个reduction块
-                C_curr *= 2
+                C_curr *= 2  # reduction cell 长宽减半，通道数加倍
                 reduction = True
             else:
                 reduction = False
