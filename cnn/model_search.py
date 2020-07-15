@@ -6,7 +6,6 @@ from genotypes import PRIMITIVES, Genotype, NAME2ID
 
 
 class Cell(nn.Module):
-
     def __init__(self, steps, multiplier, cpp, cp, c, reduction, reduction_prev):
         """
 
@@ -182,48 +181,48 @@ class Network(nn.Module):
         :param target:
         :return:
         """
-        logits = self(x)
+        logits = self(x)  # TODO how many params should be there ? genotype ?
         return self.criterion(logits, target)
 
-    def genotype(self):
-        """
-        :return:
-        """
-
-        def _parse(weights):
-            """
-            :param weights: [14, 8]
-            :return:
-            """
-            gene = []
-            n = 2
-            start = 0
-            for i in range(self.steps):  # for each node
-                end = start + n
-                W = weights[start:end].copy()  # [2, 8], [3, 8], ...
-                edges = sorted(range(i + 2),  # i+2 is the number of connection for node i
-                               key=lambda x: -max(W[x][k]  # by descending order
-                                                  for k in range(len(W[x]))  # get strongest ops
-                                                  if k != PRIMITIVES.index('none'))
-                               )[:2]  # only has two inputs
-                for j in edges:  # for every input nodes j of current node i
-                    k_best = None
-                    for k in range(len(W[j])):  # get strongest ops for current input j->i
-                        if k != PRIMITIVES.index('none'):
-                            if k_best is None or W[j][k] > W[j][k_best]:
-                                k_best = k
-                    gene.append((PRIMITIVES[k_best], j))  # save ops and input node
-                start = end
-                n += 1
-            return gene
-
-        gene_normal = _parse(F.softmax(self.alpha_normal, dim=-1).data.cpu().numpy())
-        gene_reduce = _parse(F.softmax(self.alpha_reduce, dim=-1).data.cpu().numpy())
-
-        concat = range(2 + self.steps - self.multiplier, self.steps + 2)
-        genotype = Genotype(
-            normal=gene_normal, normal_concat=concat,
-            reduce=gene_reduce, reduce_concat=concat
-        )
-
-        return genotype
+    # def genotype(self):
+    #     """
+    #     :return:
+    #     """
+    #
+    #     def _parse(weights):
+    #         """
+    #         :param weights: [14, 8]
+    #         :return:
+    #         """
+    #         gene = []
+    #         n = 2
+    #         start = 0
+    #         for i in range(self.steps):  # for each node
+    #             end = start + n
+    #             W = weights[start:end].copy()  # [2, 8], [3, 8], ...
+    #             edges = sorted(range(i + 2),  # i+2 is the number of connection for node i
+    #                            key=lambda x: -max(W[x][k]  # by descending order
+    #                                               for k in range(len(W[x]))  # get strongest ops
+    #                                               if k != PRIMITIVES.index('none'))
+    #                            )[:2]  # only has two inputs
+    #             for j in edges:  # for every input nodes j of current node i
+    #                 k_best = None
+    #                 for k in range(len(W[j])):  # get strongest ops for current input j->i
+    #                     if k != PRIMITIVES.index('none'):
+    #                         if k_best is None or W[j][k] > W[j][k_best]:
+    #                             k_best = k
+    #                 gene.append((PRIMITIVES[k_best], j))  # save ops and input node
+    #             start = end
+    #             n += 1
+    #         return gene
+    #
+    #     gene_normal = _parse(F.softmax(self.alpha_normal, dim=-1).data.cpu().numpy())
+    #     gene_reduce = _parse(F.softmax(self.alpha_reduce, dim=-1).data.cpu().numpy())
+    #
+    #     concat = range(2 + self.steps - self.multiplier, self.steps + 2)
+    #     genotype = Genotype(
+    #         normal=gene_normal, normal_concat=concat,
+    #         reduce=gene_reduce, reduce_concat=concat
+    #     )
+    #
+    #     return genotype

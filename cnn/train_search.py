@@ -6,6 +6,7 @@ import logging
 import argparse
 import torch.nn as nn
 from torch import optim
+from bandit_search import BanditTS
 import torchvision.datasets as dset
 import torch.backends.cudnn as cudnn
 
@@ -77,6 +78,8 @@ def main():
 
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, float(args.epochs), eta_min=args.lr_min)
 
+    bandit = BanditTS(args)
+
     for epoch in range(args.epochs):
         scheduler.step()
         lr = scheduler.get_lr()[0]
@@ -86,7 +89,7 @@ def main():
         logging.info('Genotype: %s', genotype)
 
         # training
-        train_acc, train_obj = train(train_queue, valid_queue, model, criterion, optimizer)
+        train_acc, train_obj = train(train_queue, model, criterion, optimizer, bandit)
         logging.info('train acc: %f', train_acc)
 
         # validation
@@ -96,12 +99,13 @@ def main():
         utils.save(model, os.path.join(args.exp_path, 'search.pt'))
 
 
-def train(train_queue, model, criterion, optimizer):
+def train(train_queue, model, criterion, optimizer, bandit):
     """
     :param train_queue: train loader
     :param model: network
     :param criterion:
     :param optimizer:
+    :param bandit:
     :return:
     """
     losses = utils.AverageMeter()
@@ -113,10 +117,16 @@ def train(train_queue, model, criterion, optimizer):
         model.train()
 
         # [b, 3, 32, 32], [40]
+        n_prev, n_act, r_prev, r_act = bandit.pick_action()
+        genotype = bandit.construct_genotype(n_prev, n_act, r_prev, r_act)
+
         x, target = x.to(device), target.cuda(non_blocking=True)
-        logits = model(x)
+        logits = model(x, genotype)
         loss = criterion(logits, target)
 
+        # update bandit param
+        reward = np.log(args.reward_c) / loss
+        bandit.update_observation(n_prev, n_act, r_prev, r_act, reward)
         # update weight
         optimizer.zero_grad()
         loss.backward()
