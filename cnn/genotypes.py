@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 Genotype = namedtuple('Genotype', 'normal normal_concat reduce reduce_concat')
-
+STEPS = 4
 PRIMITIVES = [
     'none',
     'max_pool_3x3',
