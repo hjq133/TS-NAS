@@ -13,6 +13,13 @@ import torch.backends.cudnn as cudnn
 from model_search import Network
 
 parser = argparse.ArgumentParser("cifar")
+# thompson sampling parameters
+parser.add_argument('--reward_c', type=int, default=80) # reward 基数
+parser.add_argument('--mu0', type=int, default=0)  # 高斯分布的均值
+parser.add_argument('--sigma0', type=int, default=1)  # 高斯分布的方差
+parser.add_argument('--sigma_tilde', type=int, default=1)
+
+# CIFAR neural network parameters
 parser.add_argument('--data', type=str, default='../data/cifar10', help='location of the data corpus')
 parser.add_argument('--batchsz', type=int, default=64, help='batch size')
 parser.add_argument('--lr', type=float, default=0.025, help='init learning rate')
