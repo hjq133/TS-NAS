@@ -14,11 +14,11 @@ from model_search import Network
 
 parser = argparse.ArgumentParser("cifar")
 # thompson sampling parameters
-parser.add_argument('--reward_c', type=int, default=80) # reward 基数
+parser.add_argument('--reward_c', type=int, default=3)  # reward 基数
 parser.add_argument('--mu0', type=int, default=0)  # 高斯分布的均值
 parser.add_argument('--sigma0', type=int, default=1)  # 高斯分布的方差
 parser.add_argument('--sigma_tilde', type=int, default=1)
-
+parser.add_argument('--top_k', type=int, default=2)  # 保留top k的边
 # CIFAR neural network parameters
 parser.add_argument('--data', type=str, default='../data/cifar10', help='location of the data corpus')
 parser.add_argument('--batchsz', type=int, default=64, help='batch size')
@@ -27,7 +27,7 @@ parser.add_argument('--lr_min', type=float, default=0.001, help='min learning ra
 parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
 parser.add_argument('--wd', type=float, default=3e-4, help='weight decay')
 parser.add_argument('--report_freq', type=float, default=50, help='report frequency')
-parser.add_argument('--gpu', type=int, default=0, help='gpu device id')
+parser.add_argument('--gpu', type=int, default=3, help='gpu device id')
 parser.add_argument('--epochs', type=int, default=50, help='num of training epochs')
 parser.add_argument('--init_ch', type=int, default=16, help='num of init channels')
 parser.add_argument('--layers', type=int, default=8, help='total number of layers')
@@ -36,7 +36,7 @@ parser.add_argument('--cutout', action='store_true', default=False, help='use cu
 parser.add_argument('--cutout_len', type=int, default=16, help='cutout length')
 parser.add_argument('--drop_path_prob', type=float, default=0.3, help='drop path probability')
 parser.add_argument('--exp_path', type=str, default='search', help='experiment name')
-parser.add_argument('--seed', type=int, default=2, help='random seed')
+parser.add_argument('--seed', type=int, default=3, help='random seed')
 parser.add_argument('--grad_clip', type=float, default=5, help='gradient clipping range')
 parser.add_argument('--train_portion', type=float, default=0.75, help='portion of training/val splitting')  # 区分训练集和测试集合
 args = parser.parse_args()
@@ -92,9 +92,6 @@ def main():
         lr = scheduler.get_lr()[0]
         logging.info('\nEpoch: %d lr: %e', epoch, lr)
 
-        genotype = model.genotype()
-        logging.info('Genotype: %s', genotype)
-
         # training
         train_acc, train_obj = train(train_queue, model, criterion, optimizer, bandit)
         logging.info('train acc: %f', train_acc)
@@ -132,8 +129,8 @@ def train(train_queue, model, criterion, optimizer, bandit):
         loss = criterion(logits, target)
 
         # update bandit param
-        reward = np.log(args.reward_c) / loss
-        bandit.update_observation(n_prev, n_act, r_prev, r_act, reward)
+        reward = np.log(args.reward_c) / loss  # TODO reward should be less
+        bandit.update_observation(n_prev, n_act, r_prev, r_act, reward.item())
         # update weight
         optimizer.zero_grad()
         loss.backward()

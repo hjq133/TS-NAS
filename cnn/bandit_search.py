@@ -20,55 +20,52 @@ class NeuralGraph(object):
         self.sigma0 = sigma0
         self.num_node = num_node
         self.num_op = num_op
-        self.norm_sap_time = [np.zeros([i * num_op]) for i in range(1, num_node + 1)]  # 记录sample次数
-        self.redu_sap_time = [np.zeros([i * num_op]) for i in range(1, num_node + 1)]  # 记录sample次数
-        self.norm_reward = [np.zeros(4 * i) for i in range(1, num_node + 1)]
-        self.redu_reward = [np.zeros(4 * i) for i in range(1, num_node + 1)]
+        self.sap_time = [np.zeros([self.num_op * (i + 2)]) for i in range(self.num_node)]  # 记录sample次数
+        self.reward = [np.zeros(self.num_op * (i + 2)) for i in range(self.num_node)]
 
-    def overwrite_edge_weight(self, redu_edge, norm_edge):
+    def overwrite_edge_weight(self, edge_reward):
         """
         Overwrites the existing edge rewards with specified values.
         """
         for i in range(self.num_node):
-            for j in range((i + 1) * self.num_op):
-                self.norm_reward[i][j] = norm_edge[i][j]  # 元祖的赋值是deepcopy
-                self.redu_reward[i][j] = redu_edge[i][j]
+            for j in range((i + 2) * self.num_op):
+                self.reward[i][j] = edge_reward[i][j]  # 元祖的赋值是deepcopy
 
-    def get_optimal_network(self):  # 得到权重之和最大的network
+    def get_optimal_network(self, top_k):  # 得到权重之和最大的network
         """
         Finds the shortest path through the binomial tree.
         Returns:
           network - list of nodes traversed in order.
         """
-        norm_prev = []
-        norm_act = []
-        redu_prev = []
-        redu_act = []
+        prev_node = []
+        activation = []
         for i in range(self.num_node):
-            norm_index = np.argmax(self.norm_reward[i])
-            redu_index = np.argmax(self.redu_reward[i])
-            self.norm_sap_time[i][norm_index] += 1  # 记录采样次数
-            self.redu_sap_time[i][redu_index] += 1
-            norm_prev.append(int(norm_index / self.num_op))  # 该点的前置节点
-            norm_act.append(norm_index % self.num_op)
-            redu_prev.append(int(redu_index / self.num_op))
-            redu_act.append(redu_index % self.num_op)
-        return norm_prev, norm_act, redu_prev, redu_act
+            for _ in range(top_k):  # 保留topk的边
+                index = np.argmax(self.reward[i])
+                cur_group = int(index / self.num_op)
+                prev_node.append(cur_group)  # 该点的前置节点
+                activation.append(index % self.num_op)
+                self.sap_time[i][index] += 1  # 记录采样次数
+                self.reward[i][cur_group * self.num_op: (cur_group + 1) * self.num_op] = -9999  # 避免重复采样同一个前驱节点
+
+        return prev_node, activation
 
     def save_table(self, path):
         create_exp_dir(os.path.dirname(path))
-        np.savez(path, norm_sap_time=self.norm_sap_time, redu_sap_time=self.redu_sap_time)
+        np.savez(path, sap_time=self.sap_time)
 
 
 class BanditTS(object):
     def __init__(self, args):
         super().__init__()
+        self.top_k = args.top_k
         self.num_node = genotypes.STEPS
         self.func_name = genotypes.PRIMITIVES
         self.num_op = len(self.func_name)
         self.sigma_tilde = args.sigma_tilde
         # Set up the internal environment with arbitrary initial values
-        self.internal_env = NeuralGraph(self.num_node, self.num_op, args.mu0, args.sigma0)
+        self.norm_cell = NeuralGraph(self.num_node, self.num_op, args.mu0, args.sigma0)
+        self.redu_cell = NeuralGraph(self.num_node, self.num_op, args.mu0, args.sigma0)
         # Save the posterior for edges as tuple (mean, std) of posterior belief
         self.posterior_norm = [[(args.mu0, args.sigma0) for _ in range(i * self.num_op)] for i in
                                range(2, self.num_node + 2)]  # 初始化每条边的后验分布
@@ -91,12 +88,12 @@ class BanditTS(object):
     def get_posterior_sample(self):
         """Gets a posterior sample for each edge.
         Return:
-          edge_length - dict of dicts edge_length[start_node][end_node] = distance
+          edge_reward - dict of dicts edge_reward[start_node][end_node] = reward
         """
-        redu_edge = [np.zeros(4 * i) for i in range(1, self.num_node + 1)]
-        norm_edge = [np.zeros(4 * i) for i in range(1, self.num_node + 1)]  # 随机初始化
+        redu_edge = [np.zeros(self.num_op * (i + 2)) for i in range(self.num_node)]
+        norm_edge = [np.zeros(self.num_op * (i + 2)) for i in range(self.num_node)]  # 随机初始化
         for i in range(self.num_node):
-            for j in range((i + 1) * self.num_op):
+            for j in range((i + 2) * self.num_op):
                 mean, std = self.posterior_norm[i][j]
                 norm_edge[i][j] = mean + std * np.random.randn()
                 mean, std = self.posterior_redu[i][j]
@@ -138,8 +135,10 @@ class BanditTS(object):
     def pick_action(self):
         """Greedy shortest path wrt posterior sample."""
         redu_sample, norm_sample = self.get_posterior_sample()
-        self.internal_env.overwrite_edge_weight(redu_sample, norm_sample)
-        norm_prev, norm_act, redu_prev, redu_act = self.internal_env.get_optimal_network()
+        self.redu_cell.overwrite_edge_weight(redu_sample)
+        self.norm_cell.overwrite_edge_weight(norm_sample)
+        norm_prev, norm_act = self.norm_cell.get_optimal_network(self.top_k)
+        redu_prev, redu_act = self.redu_cell.get_optimal_network(self.top_k)
         return norm_prev, norm_act, redu_prev, redu_act
 
     # def derive_sample(self):  # TODO 选择最好的那些

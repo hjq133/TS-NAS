@@ -5,6 +5,53 @@ from operations import OPS, FactorizedReduce, ReLUConvBN
 from genotypes import PRIMITIVES, Genotype, NAME2ID
 
 
+class Layer(nn.Module):
+    """
+    a mixtures output of 8 type of units.
+    we choose one of the operations while training.
+    """
+
+    def __init__(self, c, stride):
+        """
+        :param c: 16
+        :param stride: 1
+        """
+        super().__init__()
+
+        self.layers = nn.ModuleList()
+        """
+        PRIMITIVES = [
+                    'none',
+                    'max_pool_3x3',
+                    'avg_pool_3x3',
+                    'skip_connect',
+                    'sep_conv_3x3',
+                    'sep_conv_5x5',
+                    'dil_conv_3x3',
+                    'dil_conv_5x5'
+                ]
+        """
+        for primitive in PRIMITIVES:
+            # create corresponding layer
+            layer = OPS[primitive](c, stride, False)
+            # append batch normalization after pool layer
+            if 'pool' in primitive:
+                # disable affine w/b for batch normalization
+                layer = nn.Sequential(layer, nn.BatchNorm2d(c, affine=False))
+            self.layers.append(layer)
+
+    def forward(self, x, op_id):
+        """
+        :param x: data
+        :param op_id: operation id which we choose at one iteration
+        :return:
+        """
+        layer = self.layers[op_id]
+        res = layer(x)
+        # res = [w * layer(x) for w, layer in zip(weights, self.layers)]  # TODO
+        return res
+
+
 class Cell(nn.Module):
     def __init__(self, steps, multiplier, cpp, cp, c, reduction, reduction_prev):
         """
@@ -31,9 +78,9 @@ class Cell(nn.Module):
             # it will reduce width by half
             self.preprocess0 = FactorizedReduce(cpp, c, affine=False)
         else:
-            self.preprocess0 = ReLUConvBN(cpp, c, 1, 1, 0, affine=False)
+            self.preprocess0 = ReLUConvBN(cpp, c, kernel_size=1, stride=1, padding=0, affine=False)
         # preprocess1 deal with output from prev cell
-        self.preprocess1 = ReLUConvBN(cp, c, 1, 1, 0, affine=False)
+        self.preprocess1 = ReLUConvBN(cp, c, kernel_size=1, stride=1, padding=0, affine=False)
 
         # steps inside a cell
         self.steps = steps  # 4
@@ -43,8 +90,9 @@ class Cell(nn.Module):
         for i in range(self.steps):
             for j in range(2 + i):
                 # for reduction cell, it will reduce the heading 2 inputs only
-                stride = 2 if reduction and j < 2 else 1
-                self.layers.append([OPS[primitive](c, stride, False) for primitive in PRIMITIVES])
+                stride = 2 if reduction and j < 2 else 1  # 只对和 s0,s1 相连的边做reduction
+                layer = Layer(c, stride)
+                self.layers.append(layer)
 
     def forward(self, s0, s1, genotype):
         """
@@ -53,8 +101,8 @@ class Cell(nn.Module):
         :param genotype: [14, 8]
         :return:
         """
-        s0 = self.preprocess0(s0)  # [40, 48, 32, 32], [40, 16, 32, 32]
-        s1 = self.preprocess1(s1)  # [40, 48, 32, 32], [40, 16, 32, 32]
+        s0 = self.preprocess0(s0)  # [b, 48, 32, 32], [b, 16, 32, 32]
+        s1 = self.preprocess1(s1)  # [b, 48, 32, 32], [b, 16, 32, 32]
 
         states = [s0, s1]
         offset = 0
@@ -72,14 +120,14 @@ class Cell(nn.Module):
             op2_id = NAME2ID[op_names[2 * i + 1]]
             h1 = states[indices[2 * i]]
             h2 = states[indices[2 * i + 1]]
-            op1 = self.layers[offset + indices[2 * i]][op1_id]
-            op2 = self.layers[offset + indices[2 * i + 1]][op2_id]
-            h1 = op1(h1)
-            h2 = op2(h2)
+            op1 = self.layers[offset + indices[2 * i]]
+            op2 = self.layers[offset + indices[2 * i + 1]]
+            h1 = op1(h1, op1_id)
+            h2 = op2(h2, op2_id)
 
             s = h1 + h2
-            states += [s]
             offset += len(states)
+            states += [s]
         # concat along dim=channel
         return torch.cat([states[i] for i in concat], dim=1)  # 6 of [40, 16, 32, 32]
 
@@ -115,7 +163,7 @@ class Network(nn.Module):
         # stem network, convert 3 channel to c_curr
         self.stem = nn.Sequential(  # 3 => 48
             nn.Conv2d(3, c_curr, 3, padding=1, bias=False),
-            nn.BatchNorm2d(c_curr)
+            nn.BatchNorm2d(c_curr)  # 批归一化是在channel层进行的
         )
 
         # c_curr means a factor of the output channels of current cell
@@ -135,7 +183,7 @@ class Network(nn.Module):
             # [cp, h, h] => [multiplier*c_curr, h/h//2, h/h//2]
             # the output channels = multiplier * c_curr
             cell = Cell(steps, multiplier, cpp, cp, c_curr, reduction, reduction_prev)
-            # update reduction_prev
+            # update reduction_prev , len(cell.layers) = 2 + 3 + 4 + 5 = 14 一共有14条边
             reduction_prev = reduction
             self.cells += [cell]
             cpp, cp = cp, multiplier * c_curr
