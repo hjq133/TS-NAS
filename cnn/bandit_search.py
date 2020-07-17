@@ -75,7 +75,7 @@ class BanditTS(object):
     def construct_genotype(self, norm_prev, norm_act, redu_prev, redu_act):
         normal = []
         reduce = []
-        concat = range(2, self.num_node + 2)  # TODO: should be more flexible
+        concat = range(2, self.num_node + 2)
         for _, (node, func_id) in enumerate(zip(norm_prev, norm_act)):
             name = PRIMITIVES[func_id]
             normal.append((name, node))
@@ -100,22 +100,23 @@ class BanditTS(object):
                 redu_edge[i][j] = mean + std * np.random.randn()
         return redu_edge, norm_edge
 
-    def bayes(self, old_mean, old_std, reward):
+    # Bayesian inference
+    def bayes(self, old_mean, old_std, data):
         old_precision = 1. / (old_std ** 2)
         noise_precision = 1. / (self.sigma_tilde ** 2)
         new_precision = old_precision + noise_precision
-        new_mean = (noise_precision * (reward + 0.5 / noise_precision) + old_precision * old_mean) / new_precision
+        new_mean = (noise_precision * data + old_precision * old_mean) / new_precision
         new_std = np.sqrt(1. / new_precision)
         return new_mean, new_std
 
-    def update_observation(self, norm_prev, norm_act, redu_prev, redu_act, reward):
+    def update_observation(self, norm_prev, norm_act, redu_prev, redu_act, reward):  # TODO how to update ?
         """Updates observations for binomial bridge.
         Args:
           action - path chosen by the agent (not used)
           reward - reward
         """
         # update norm cell
-        for i in range(self.num_node):  # reward记录的只是图中一部分的边的reward
+        for i in range(self.num_op):  # reward记录的只是图中一部分的边的reward
             cur_action = norm_prev[i] * self.num_op + norm_act[i]
             old_mean, old_std = self.posterior_norm[i][cur_action]
             # convert std into precision for easier algebra
@@ -124,7 +125,7 @@ class BanditTS(object):
             self.posterior_norm[i][cur_action] = (new_mean, new_std)
 
         # update reduction cell
-        for i in range(self.num_node):  # reward记录的只是图中一部分的边的reward
+        for i in range(self.num_op):  # reward记录的只是图中一部分的边的reward
             cur_action = redu_prev[i] * self.num_op + redu_act[i]
             old_mean, old_std = self.posterior_redu[i][cur_action]
             # convert std into precision for easier algebra
@@ -141,7 +142,7 @@ class BanditTS(object):
         redu_prev, redu_act = self.redu_cell.get_optimal_network(self.top_k)
         return norm_prev, norm_act, redu_prev, redu_act
 
-    # def derive_sample(self):  # TODO 选择最好的那些
+    # def derive_sample(self):  # TODO 如何derive
     #     activation = []
     #     prev_node = []
     #     for i in range(self.num_node):

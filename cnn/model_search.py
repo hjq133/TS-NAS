@@ -139,7 +139,6 @@ class Network(nn.Module):
 
     def __init__(self, c, num_classes, layers, criterion, steps=4, multiplier=4, stem_multiplier=3):
         """
-
         :param c: 16
         :param num_classes: 10
         :param layers: number of cells of current network

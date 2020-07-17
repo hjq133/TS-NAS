@@ -9,14 +9,13 @@ from torch import optim
 from bandit_search import BanditTS
 import torchvision.datasets as dset
 import torch.backends.cudnn as cudnn
-
 from model_search import Network
 
 parser = argparse.ArgumentParser("cifar")
 # thompson sampling parameters
-parser.add_argument('--reward_c', type=int, default=3)  # reward 基数
-parser.add_argument('--mu0', type=int, default=0)  # 高斯分布的均值
-parser.add_argument('--sigma0', type=int, default=1)  # 高斯分布的方差
+parser.add_argument('--reward_c', type=int, default=3)  # reward 基数  # TODO 每条边所获得的reward需要与训练次数t作比较
+parser.add_argument('--mu0', type=int, default=0)  # 高斯分布的均值  TODO 初值是不是很重要
+parser.add_argument('--sigma0', type=int, default=1)  # 高斯分布的方差  TODO 初值是不是很重要
 parser.add_argument('--sigma_tilde', type=int, default=1)
 parser.add_argument('--top_k', type=int, default=2)  # 保留top k的边
 # CIFAR neural network parameters
@@ -115,7 +114,7 @@ def train(train_queue, model, criterion, optimizer, bandit):
     losses = utils.AverageMeter()
     top1 = utils.AverageMeter()
     top5 = utils.AverageMeter()
-    for step, (x, target) in enumerate(train_queue):
+    for step, (x, target) in enumerate(train_queue):  # max step > 500
 
         batchsz = x.size(0)
         model.train()
@@ -129,7 +128,7 @@ def train(train_queue, model, criterion, optimizer, bandit):
         loss = criterion(logits, target)
 
         # update bandit param
-        reward = np.log(args.reward_c) / loss  # TODO reward should be less
+        reward = np.log(args.reward_c) / loss  # TODO how to set reward value, reward should be less and less as T go up
         bandit.update_observation(n_prev, n_act, r_prev, r_act, reward.item())
         # update weight
         optimizer.zero_grad()
