@@ -104,7 +104,7 @@ class BanditTS(object):
           reward - reward
         """
 
-        for i in range(self.num_op):  # reward记录的只是图中一部分的边的reward
+        for i in range(self.num_node):  # reward记录的只是图中一部分的边的reward
             cur_action = prev[i] * self.num_op + act[i]
             old_mean, old_std = self.posterior[i][cur_action]
 

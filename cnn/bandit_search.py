@@ -116,22 +116,24 @@ class BanditTS(object):
           reward - reward
         """
         # update norm cell
-        for i in range(self.num_op):  # reward记录的只是图中一部分的边的reward
-            cur_action = norm_prev[i] * self.num_op + norm_act[i]
-            old_mean, old_std = self.posterior_norm[i][cur_action]
-            # convert std into precision for easier algebra
-            new_mean, new_std = self.bayes(old_mean, old_std, reward)
-            # update the posterior in place
-            self.posterior_norm[i][cur_action] = (new_mean, new_std)
+        for i in range(self.num_node):  # reward记录的只是图中一部分的边的reward
+            for j in range(self.top_k):  # 保留了top k的边
+                cur_action = norm_prev[self.top_k * i + j] * self.num_op + norm_act[self.top_k * i + j]
+                old_mean, old_std = self.posterior_norm[i][cur_action]
+                # convert std into precision for easier algebra
+                new_mean, new_std = self.bayes(old_mean, old_std, reward)
+                # update the posterior in place
+                self.posterior_norm[i][cur_action] = (new_mean, new_std)
 
         # update reduction cell
-        for i in range(self.num_op):  # reward记录的只是图中一部分的边的reward
-            cur_action = redu_prev[i] * self.num_op + redu_act[i]
-            old_mean, old_std = self.posterior_redu[i][cur_action]
-            # convert std into precision for easier algebra
-            new_mean, new_std = self.bayes(old_mean, old_std, reward)
-            # update the posterior in place
-            self.posterior_redu[i][cur_action] = (new_mean, new_std)
+        for i in range(self.num_node):  # reward记录的只是图中一部分的边的reward
+            for j in range(self.top_k):
+                cur_action = redu_prev[self.top_k * i + j] * self.num_op + redu_act[self.top_k * i + j]
+                old_mean, old_std = self.posterior_redu[i][cur_action]
+                # convert std into precision for easier algebra
+                new_mean, new_std = self.bayes(old_mean, old_std, reward)
+                # update the posterior in place
+                self.posterior_redu[i][cur_action] = (new_mean, new_std)
 
     def pick_action(self):
         """Greedy shortest path wrt posterior sample."""
