@@ -96,7 +96,7 @@ class BanditTS(object):
 
         return edge_reward
 
-    def update_observation(self, prev, act, reward):
+    def update_observation(self, prev, act, data):
         """Updates observations for binomial bridge.
         原文 4.3 的更新公式
         Args:
@@ -104,9 +104,8 @@ class BanditTS(object):
           reward - reward
         """
 
-        for i in range(self.num_node):  # reward记录的只是图中一部分的边的reward
+        for i in range(self.num_op):  # reward记录的只是图中一部分的边的reward
             cur_action = prev[i] * self.num_op + act[i]
-            y = reward
             old_mean, old_std = self.posterior[i][cur_action]
 
             # convert std into precision for easier algebra
@@ -114,7 +113,7 @@ class BanditTS(object):
             noise_precision = 1. / (self.sigma_tilde ** 2)
             new_precision = old_precision + noise_precision
 
-            new_mean = (noise_precision * (y + 0.5 / noise_precision) + old_precision * old_mean) / new_precision
+            new_mean = (noise_precision * data + old_precision * old_mean) / new_precision
             new_std = np.sqrt(1. / new_precision)
 
             # update the posterior in place
