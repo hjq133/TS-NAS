@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c914a6f7-4700-45a1-95c7-1460ab13f8af" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/bandit_search.py" beforeDir="false" afterPath="$PROJECT_DIR$/bandit_search.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/train_search.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_search.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../rnn/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../rnn/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -60,8 +61,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/train_search.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="649">
-              <caret line="131" column="35" lean-forward="true" selection-start-line="131" selection-start-column="35" selection-end-line="131" selection-end-column="35" />
+            <state relative-caret-position="304">
+              <caret line="161" column="25" lean-forward="true" selection-start-line="161" selection-start-column="25" selection-end-line="161" selection-end-column="25" />
               <folding>
                 <element signature="e#0#26#0" expanded="true" />
               </folding>
@@ -110,8 +111,8 @@
         <option value="$PROJECT_DIR$/model.py" />
         <option value="$PROJECT_DIR$/utils.py" />
         <option value="$PROJECT_DIR$/model_search.py" />
-        <option value="$PROJECT_DIR$/train_search.py" />
         <option value="$PROJECT_DIR$/bandit_search.py" />
+        <option value="$PROJECT_DIR$/train_search.py" />
       </list>
     </option>
   </component>
@@ -219,12 +220,12 @@
       <workItem from="1594889422274" duration="4030000" />
       <workItem from="1594899698973" duration="1737000" />
       <workItem from="1594945326064" duration="1258000" />
-      <workItem from="1594967021921" duration="1251000" />
+      <workItem from="1594967021921" duration="1834000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="77722000" />
+    <option name="totallyTimeSpent" value="78305000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -245,7 +246,7 @@
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
       <window_info anchor="bottom" id="Run" order="2" />
-      <window_info active="true" anchor="bottom" id="Debug" order="3" sideWeight="0.4997227" visible="true" weight="0.3737143" />
+      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.4997227" weight="0.3737143" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" weight="0.3280363" />
@@ -444,8 +445,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/train_search.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="649">
-          <caret line="131" column="35" lean-forward="true" selection-start-line="131" selection-start-column="35" selection-end-line="131" selection-end-column="35" />
+        <state relative-caret-position="304">
+          <caret line="161" column="25" lean-forward="true" selection-start-line="161" selection-start-column="25" selection-end-line="161" selection-end-column="25" />
           <folding>
             <element signature="e#0#26#0" expanded="true" />
           </folding>

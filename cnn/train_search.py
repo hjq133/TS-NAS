@@ -96,7 +96,7 @@ def main():
         logging.info('train acc: %f', train_acc)
 
         # validation
-        valid_acc, valid_obj = infer(valid_queue, model, criterion)
+        valid_acc, valid_obj = infer(valid_queue, model, criterion, bandit)
         logging.info('valid acc: %f', valid_acc)
 
         utils.save(model, os.path.join(args.exp_path, 'search.pt'))
@@ -147,7 +147,7 @@ def train(train_queue, model, criterion, optimizer, bandit):
     return top1.avg, losses.avg
 
 
-def infer(valid_queue, model, criterion):
+def infer(valid_queue, model, criterion, bandit):
     """
 
     :param valid_queue:
@@ -159,6 +159,9 @@ def infer(valid_queue, model, criterion):
     top1 = utils.AverageMeter()
     top5 = utils.AverageMeter()
 
+    n_prev, n_act, r_prev, r_act = bandit.pick_action()  # TODO derive
+    genotype = bandit.construct_genotype(n_prev, n_act, r_prev, r_act)
+
     model.eval()
     with torch.no_grad():
         for step, (x, target) in enumerate(valid_queue):
@@ -166,7 +169,7 @@ def infer(valid_queue, model, criterion):
             x, target = x.to(device), target.cuda(non_blocking=True)
             batchsz = x.size(0)
 
-            logits = model(x)
+            logits = model(x, genotype)
             loss = criterion(logits, target)
 
             prec1, prec5 = utils.accuracy(logits, target, topk=(1, 5))
