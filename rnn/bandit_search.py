@@ -48,11 +48,18 @@ class NeuralGraph(object):
         # Updating the optimal reward
         return prev_node, activation
 
-    def warm_up_network(self):  # 保留k条前缀边
+    def warm_up_network(self):  # warm up random sample
         prev_node = []
         activation = []
         for i in range(self.num_node):
-            index = np.argmin(self.sap_time[i])
+            val = np.min(self.sap_time[i])
+
+            indices = []  # 保证random choice
+            for j in range(len(self.sap_time[i])):
+                if self.sap_time[i][j] == val:
+                    indices.append(j)
+            index = np.random.choice(indices)
+            
             cur_group = int(index / self.num_op)
             prev_node.append(cur_group)  # 该点的前置节点
             activation.append(index % self.num_op)
@@ -67,7 +74,6 @@ class NeuralGraph(object):
 class BanditTS(object):
     def __init__(self, args):
         super().__init__()
-        self.top_k = args.top_k
         self.num_node = genotypes.STEPS
         self.func_name = genotypes.PRIMITIVES
         self.num_op = len(self.func_name)

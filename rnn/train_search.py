@@ -6,7 +6,7 @@ import utils
 import torch.backends.cudnn as cudnn
 from bandit_search import BanditTS
 from model_search import RNNModel, DARTSCell
-from utils import batchify, get_batch, repackage_hidden, create_exp_dir, save_checkpoint
+from utils import batchify, get_batch, repackage_hidden, create_exp_dir
 from genotypes import DARTS_V2
 
 embed_size, n_hid, n_hid_last = (850, 850, 850)
@@ -157,8 +157,6 @@ if not args.load_warm_up:
     logging.info('-' * 89)
     logging.info('now warm up end !')
     logging.info('-' * 89)
-else:  # load
-    model = utils.load()
 
 for epoch in range(1 + args.warm_up_epoch, args.epochs + 1):
     epoch_start_time = time.time()
