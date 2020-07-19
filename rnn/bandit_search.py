@@ -1,11 +1,8 @@
 import numpy as np
-import random
-import collections
-import itertools
 import os
 import genotypes
 from genotypes import Genotype
-from utils import make_dirs
+from utils import create_exp_dir
 
 
 class NeuralGraph(object):
@@ -23,51 +20,60 @@ class NeuralGraph(object):
         self.sigma0 = sigma0
         self.num_node = num_node
         self.num_op = num_op
-        self.sap_time = [np.zeros([i * num_op]) for i in range(1, num_node + 1)]  # 记录sample次数
-        self.reward = [np.zeros(4 * i) for i in range(1, num_node + 1)]
+        self.sap_time = [np.zeros([self.num_op * (i + 1)]) for i in range(num_node)]  # 记录sample次数
+        self.reward = [np.zeros(self.num_op * (i + 1)) for i in range(num_node)]
 
     def overwrite_edge_weight(self, edge_reward):
-        """Overwrites the existing edge weights with specified values.
-
-        Args:
-          edge_length - dict of dicts edge_weight[i][j] = weight
+        """
+        Overwrites the existing edge rewards with specified values.
         """
         for i in range(self.num_node):
             for j in range((i + 1) * self.num_op):
                 self.reward[i][j] = edge_reward[i][j]  # 元祖的赋值是deepcopy
 
     def get_optimal_network(self):  # 得到权重之和最大的network
-        """Finds the shortest path through the binomial tree.
-
+        """
+        Finds the shortest path through the binomial tree.
         Returns:
           network - list of nodes traversed in order.
         """
         prev_node = []
         activation = []
         for i in range(self.num_node):
-            s_index = np.argmax(self.reward[i])
-            self.sap_time[i][s_index] += 1  # 记录采样次数
-            prev_node.append(int(s_index / self.num_op))  # 该点的前置节点
-            activation.append(s_index % self.num_op)
-
+            index = np.argmax(self.reward[i])
+            cur_group = int(index / self.num_op)
+            prev_node.append(cur_group)  # 该点的前置节点
+            activation.append(index % self.num_op)
+            self.sap_time[i][index] += 1  # 记录采样次数
         # Updating the optimal reward
         return prev_node, activation
 
+    def warm_up_network(self):  # 保留k条前缀边
+        prev_node = []
+        activation = []
+        for i in range(self.num_node):
+            index = np.argmin(self.sap_time[i])
+            cur_group = int(index / self.num_op)
+            prev_node.append(cur_group)  # 该点的前置节点
+            activation.append(index % self.num_op)
+            self.sap_time[i][index] += 1
+        return prev_node, activation
+
     def save_table(self, path):
-        make_dirs(os.path.dirname(path))
+        create_exp_dir(os.path.dirname(path))
         np.savez(path, sap_time=self.sap_time)
 
 
 class BanditTS(object):
     def __init__(self, args):
         super().__init__()
+        self.top_k = args.top_k
         self.num_node = genotypes.STEPS
         self.func_name = genotypes.PRIMITIVES
         self.num_op = len(self.func_name)
         self.sigma_tilde = args.sigma_tilde
-
         # Set up the internal environment with arbitrary initial values
-        self.internal_env = NeuralGraph(self.num_node, self.num_op, args.mu0, args.sigma0)
+        self.cell = NeuralGraph(self.num_node, self.num_op, args.mu0, args.sigma0)
 
         # Save the posterior for edges as tuple (mean, std) of posterior belief
         self.posterior = [[(args.mu0, args.sigma0) for _ in range(i * self.num_op)] for i in
@@ -75,28 +81,37 @@ class BanditTS(object):
 
     def construct_genotype(self, prev_node, activation):
         recurrent = []
+        concat = range(1, self.num_node + 1)
         for _, (node, func_id) in enumerate(zip(prev_node, activation)):
             name = self.get_activation(func_id)
             recurrent.append((name, node))
-        genotype = Genotype(recurrent=recurrent, concat=range(1, self.num_node + 1))
+        genotype = Genotype(recurrent=recurrent, concat=concat)
         return genotype
 
     def get_posterior_sample(self):
         """Gets a posterior sample for each edge.
 
         Return:
-          edge_length - dict of dicts edge_length[start_node][end_node] = distance
+          edge_reward - dict of dicts edge_reward[start_node][end_node] = reward
         """
-        edge_reward = [np.zeros(4 * i) for i in range(1, self.num_node + 1)]  # 随机初始化
-
+        edge = [np.zeros(self.num_op * (i + 1)) for i in range(self.num_node)]  # 随机初始化
         for i in range(self.num_node):
             for j in range((i + 1) * self.num_op):
                 mean, std = self.posterior[i][j]
-                edge_reward[i][j] = mean + std * np.random.randn()
+                edge[i][j] = mean + std * np.random.randn()
 
-        return edge_reward
+        return edge
 
-    def update_observation(self, prev, act, data):
+        # Bayesian inference
+    def bayes(self, old_mean, old_std, reward):
+        old_precision = 1. / (old_std ** 2)
+        noise_precision = 1. / (self.sigma_tilde ** 2)
+        new_precision = old_precision + noise_precision
+        new_mean = (noise_precision * reward + old_precision * old_mean) / new_precision
+        new_std = np.sqrt(1. / new_precision)
+        return new_mean, new_std
+
+    def update_observation(self, prev, act, reward):
         """Updates observations for binomial bridge.
         原文 4.3 的更新公式
         Args:
@@ -107,23 +122,15 @@ class BanditTS(object):
         for i in range(self.num_node):  # reward记录的只是图中一部分的边的reward
             cur_action = prev[i] * self.num_op + act[i]
             old_mean, old_std = self.posterior[i][cur_action]
-
-            # convert std into precision for easier algebra
-            old_precision = 1. / (old_std ** 2)
-            noise_precision = 1. / (self.sigma_tilde ** 2)
-            new_precision = old_precision + noise_precision
-
-            new_mean = (noise_precision * data + old_precision * old_mean) / new_precision
-            new_std = np.sqrt(1. / new_precision)
-
+            new_mean, new_std = self.bayes(old_mean, old_std, reward)
             # update the posterior in place
             self.posterior[i][cur_action] = (new_mean, new_std)
 
     def pick_action(self):
         """Greedy shortest path wrt posterior sample."""
         posterior_sample = self.get_posterior_sample()
-        self.internal_env.overwrite_edge_weight(posterior_sample)
-        prev_node, activation = self.internal_env.get_optimal_network()
+        self.cell.overwrite_edge_weight(posterior_sample)
+        prev_node, activation = self.cell.get_optimal_network()
         return prev_node, activation
 
     def get_activation(self, act):
