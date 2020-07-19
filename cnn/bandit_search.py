@@ -47,7 +47,18 @@ class NeuralGraph(object):
                 activation.append(index % self.num_op)
                 self.sap_time[i][index] += 1  # 记录采样次数
                 self.reward[i][cur_group * self.num_op: (cur_group + 1) * self.num_op] = -9999  # 避免重复采样同一个前驱节点
+        return prev_node, activation
 
+    def warm_up_network(self, top_k):  # 保留k条前缀边
+        prev_node = []
+        activation = []
+        for i in range(self.num_node):
+            for _ in range(top_k):  # 保留topk的边
+                index = np.argmin(self.sap_time[i])
+                cur_group = int(index / self.num_op)
+                prev_node.append(cur_group)  # 该点的前置节点
+                activation.append(index % self.num_op)
+                self.sap_time[i][index] += 1
         return prev_node, activation
 
     def save_table(self, path):
@@ -157,3 +168,8 @@ class BanditTS(object):
     #         prev_node.append(int(id / self.num_op))
     #         activation.append(id % self.num_op)
     #     return prev_node, activation
+
+    def warm_up_sample(self):  # 根据sample次数进行sample, 保证每条edge都被sample到了
+        norm_prev, norm_act = self.norm_cell.warm_up_network(self.top_k)
+        redu_prev, redu_act = self.redu_cell.warm_up_network(self.top_k)
+        return norm_prev, norm_act, redu_prev, redu_act

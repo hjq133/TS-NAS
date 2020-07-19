@@ -14,9 +14,9 @@ from model_search import Network
 parser = argparse.ArgumentParser("cifar")
 # thompson sampling parameters
 parser.add_argument('--reward_c', type=int, default=3)  # reward 基数  # TODO 每条边所获得的reward需要与训练次数t作比较
-parser.add_argument('--mu0', type=int, default=0)  # 高斯分布的均值  TODO 初值是不是很重要
+parser.add_argument('--mu0', type=int, default=1)  # 高斯分布的均值  TODO 初值是不是很重要
 parser.add_argument('--sigma0', type=int, default=1)  # 高斯分布的方差  TODO 初值是不是很重要
-parser.add_argument('--sigma_tilde', type=int, default=1)
+parser.add_argument('--sigma_tilde', type=int, default=1)  # 方差 assume为1
 parser.add_argument('--top_k', type=int, default=2)  # 保留top k的边
 # CIFAR neural network parameters
 parser.add_argument('--data', type=str, default='../data/cifar10', help='location of the data corpus')
@@ -31,7 +31,7 @@ parser.add_argument('--epochs', type=int, default=50, help='num of training epoc
 parser.add_argument('--init_ch', type=int, default=16, help='num of init channels')
 parser.add_argument('--layers', type=int, default=8, help='total number of layers')
 parser.add_argument('--model_path', type=str, default='saved_models', help='path to save the model')
-parser.add_argument('--cutout', action='store_true', default=False, help='use cutout')
+parser.add_argument('--cutout', action='store_true', default=True, help='use cutout')
 parser.add_argument('--cutout_len', type=int, default=16, help='cutout length')
 parser.add_argument('--drop_path_prob', type=float, default=0.3, help='drop path probability')
 parser.add_argument('--exp_path', type=str, default='search', help='experiment name')
