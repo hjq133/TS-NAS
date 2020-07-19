@@ -27,7 +27,6 @@ parser.add_argument('--epochs', type=int, default=300, help='upper epoch limit')
 parser.add_argument('--save', type=str, default='EXP', help='path to save the final model')
 parser.add_argument('--gpu', type=int, default=3, help='gpu')
 parser.add_argument('--warm_up_epoch', type=int, default=50)
-parser.add_argument('--need_warm_up', type=bool, default=False)
 parser.add_argument('--load_warm_up', type=bool, default=False)
 
 parser.add_argument('--reward', type=int, default=80)
@@ -51,6 +50,8 @@ test_data = batchify(corpus.test, test_batch_size)
 n_tokens = len(corpus.dictionary)
 model = RNNModel(n_tokens, embed_size, n_hid, n_hid_last, dropout, dropout_h, dropout_x, dropout_i, dropout_e,
                  cell_cls=DARTSCell)
+if args.load_warm_up:
+    model = utils.load(model, os.path.join(args.save, 'warm_up_trained.pt'))
 
 parallel_model = model.cuda()
 total_params = sum(x.data.nelement() for x in model.parameters())
@@ -134,9 +135,13 @@ bandit = BanditTS(args)
 logging = init_logging()
 stored_loss = 100000000
 optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.w_decay)
-if args.need_warm_up:
+
+if not args.load_warm_up:
+    logging.info('-' * 89)
+    logging.info('now warm up start')
+    logging.info('-' * 89)
     epoch_start_time = time.time()
-    for epoch in range(args.warm_up_epoch):
+    for epoch in range(1, 1 + args.warm_up_epoch):
         prev, act = bandit.warm_up_sample()
         genotype = bandit.construct_genotype(prev, act)
         train(genotype)
@@ -146,8 +151,16 @@ if args.need_warm_up:
                      '| valid ppl {:8.2f}'.format(epoch, (time.time() - epoch_start_time), val_loss,
                                                   math.exp(val_loss)))
         logging.info('-' * 89)
+        if epoch > 0 and epoch % 5 == 0:
+            utils.save(model, os.path.join(args.save, 'warm_up_trained.pt'))
+            print('saved to: warm_up_trained.pt')
+    logging.info('-' * 89)
+    logging.info('now warm up end !')
+    logging.info('-' * 89)
+else:  # load
+    model = utils.load()
 
-for epoch in range(1, args.epochs + 1):
+for epoch in range(1 + args.warm_up_epoch, args.epochs + 1):
     epoch_start_time = time.time()
 
     prev, act = bandit.pick_action()
@@ -162,12 +175,8 @@ for epoch in range(1, args.epochs + 1):
     logging.info('-' * 89)
 
     if epoch > 0 and epoch % 5 == 0:
-        if epoch <= args.warm_up_epoch:
-            utils.save(model, os.path.join(args.save, 'warm_up_trained.pt'))
-            print('saved to: warm_up_trained.pt')
-        else:
-            utils.save(model, os.path.join(args.save, 'trained.pt'))
-            print('saved to: trained.pt')
+        utils.save(model, os.path.join(args.save, 'trained.pt'))
+        print('saved to: trained.pt')
         bandit.cell.save_table(os.path.join(args.save, 'table'))
 
     if val_loss < stored_loss:
