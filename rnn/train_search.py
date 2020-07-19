@@ -2,10 +2,11 @@ import numpy as np
 import sys, os, argparse, data, time, logging, gc, math, glob
 import torch.nn as nn
 import torch
+import utils
 import torch.backends.cudnn as cudnn
 from bandit_search import BanditTS
 from model_search import RNNModel, DARTSCell
-from utils import batchify, get_batch, repackage_hidden, create_exp_dir  # , save_checkpoint
+from utils import batchify, get_batch, repackage_hidden, create_exp_dir, save_checkpoint
 from genotypes import DARTS_V2
 
 embed_size, n_hid, n_hid_last = (850, 850, 850)
@@ -25,9 +26,12 @@ parser.add_argument('--w-decay', type=float, default=8e-7, help='weight decay ap
 parser.add_argument('--epochs', type=int, default=300, help='upper epoch limit')
 parser.add_argument('--save', type=str, default='EXP', help='path to save the final model')
 parser.add_argument('--gpu', type=int, default=3, help='gpu')
+parser.add_argument('--warm_up_epoch', type=int, default=50)
+parser.add_argument('--need_warm_up', type=bool, default=False)
+parser.add_argument('--load_warm_up', type=bool, default=False)
 
 parser.add_argument('--reward', type=int, default=80)
-parser.add_argument('--mu0', type=int, default=0)  # 高斯分布的均值
+parser.add_argument('--mu0', type=int, default=1)  # 高斯分布的均值
 parser.add_argument('--sigma0', type=int, default=1)  # 高斯分布的方差
 parser.add_argument('--sigma_tilde', type=int, default=1)
 args = parser.parse_args()
@@ -73,13 +77,11 @@ def summary(total_loss, start_time, batch):
                                                      math.exp(cur_loss)))
 
 
-def evaluate(data_source, batch_size=10):
+def evaluate(genotype, data_source, batch_size=10):
     # Turn on evaluation mode which disables dropout.
     model.eval()
     total_loss = 0
     hidden = model.init_hidden(batch_size)
-    prev, act = bandit.derive_sample()
-    genotype = bandit.construct_genotype(prev, act)
     logging.info('Genotype: {}'.format(genotype))
 
     with torch.no_grad():
@@ -93,7 +95,8 @@ def evaluate(data_source, batch_size=10):
     return total_loss / len(data_source)
 
 
-def train():
+def train(genotype):
+    sum_loss = 0
     total_loss = 0
     start_time = time.time()
     hidden = model.init_hidden(train_batch_size)
@@ -107,15 +110,9 @@ def train():
         targets = targets.view(-1)
         optimizer.zero_grad()
         hidden = repackage_hidden(hidden)
-
-        prev, act = bandit.pick_action()
-        genotype = bandit.construct_genotype(prev, act)
-
         log_prob, hidden = parallel_model(datas, hidden, genotype, return_h=False)
         raw_loss = nn.functional.nll_loss(log_prob.view(-1, log_prob.size(2)), targets)
         loss = raw_loss
-        bandit.update_observation(prev, act, np.log(args.reward) / loss.item())
-
         total_loss += loss
         loss.backward()
         gc.collect()  # 清内存
@@ -124,29 +121,54 @@ def train():
         optimizer.step()
 
         if batch % args.log_interval == 0 and batch > 0:
+            sum_loss += total_loss
             summary(total_loss, start_time, batch)
             total_loss = 0
             start_time = time.time()
         batch += 1
         i += seq_len
+    return sum_loss
 
 
 bandit = BanditTS(args)
 logging = init_logging()
 stored_loss = 100000000
 optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.w_decay)
+if args.need_warm_up:
+    epoch_start_time = time.time()
+    for epoch in range(args.warm_up_epoch):
+        prev, act = bandit.warm_up_sample()
+        genotype = bandit.construct_genotype(prev, act)
+        train(genotype)
+        val_loss = evaluate(genotype, val_data, eval_batch_size)
+        logging.info('-' * 89)
+        logging.info('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} '
+                     '| valid ppl {:8.2f}'.format(epoch, (time.time() - epoch_start_time), val_loss,
+                                                  math.exp(val_loss)))
+        logging.info('-' * 89)
+
 for epoch in range(1, args.epochs + 1):
     epoch_start_time = time.time()
-    train()
 
-    val_loss = evaluate(val_data, eval_batch_size)
+    prev, act = bandit.pick_action()
+    genotype = bandit.construct_genotype(prev, act)
+    loss = train(genotype)
+    bandit.update_observation(prev, act, np.log(args.reward) / loss.item())
+
+    val_loss = evaluate(genotype, val_data, eval_batch_size)
     logging.info('-' * 89)
     logging.info('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} '
                  '| valid ppl {:8.2f}'.format(epoch, (time.time() - epoch_start_time), val_loss, math.exp(val_loss)))
     logging.info('-' * 89)
 
     if epoch > 0 and epoch % 5 == 0:
-        bandit.internal_env.save_table(os.path.join(args.save, 'table'))
+        if epoch <= args.warm_up_epoch:
+            utils.save(model, os.path.join(args.save, 'warm_up_trained.pt'))
+            print('saved to: warm_up_trained.pt')
+        else:
+            utils.save(model, os.path.join(args.save, 'trained.pt'))
+            print('saved to: trained.pt')
+        bandit.cell.save_table(os.path.join(args.save, 'table'))
 
     if val_loss < stored_loss:
         logging.info('better loss!')

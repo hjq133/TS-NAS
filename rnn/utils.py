@@ -84,3 +84,21 @@ def make_dirs(path):
     if not os.path.exists(path):
         logging.info("[*] Make directories : {}".format(path))
         os.makedirs(path)
+
+
+def save_checkpoint(state, is_best, save):
+    filename = os.path.join(save, 'checkpoint.pth.tar')
+    torch.save(state, filename)
+    if is_best:
+        best_filename = os.path.join(save, 'model_best.pth.tar')
+        shutil.copyfile(filename, best_filename)
+
+
+def save(model, model_path):
+    print('saved to model:', model_path)
+    torch.save(model.state_dict(), model_path)
+
+
+def load(model, model_path):
+    print('load from model:', model_path)
+    model.load_state_dict(torch.load(model_path))

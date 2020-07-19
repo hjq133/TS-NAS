@@ -158,3 +158,7 @@ class BanditTS(object):
             prev_node.append(int(id / self.num_op))
             activation.append(id % self.num_op)
         return prev_node, activation
+
+    def warm_up_sample(self):  # 根据sample次数进行sample, 保证每条edge都被sample到了
+        prev_node, activation = self.cell.warm_up_network()
+        return prev_node, activation
