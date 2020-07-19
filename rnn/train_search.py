@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch
 import torch.backends.cudnn as cudnn
 from bandit_search import BanditTS
-from model import RNNModel, DARTSCell
+from model_search import RNNModel, DARTSCell
 from utils import batchify, get_batch, repackage_hidden, create_exp_dir  # , save_checkpoint
 from genotypes import DARTS_V2
 
