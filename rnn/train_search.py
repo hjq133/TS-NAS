@@ -6,7 +6,7 @@ import utils
 import torch.backends.cudnn as cudnn
 from bandit_search import BanditTS
 from model_search import RNNModel, DARTSCell
-from utils import batchify, get_batch, repackage_hidden, create_exp_dir
+from utils import batchify, get_batch, repackage_hidden, create_exp_dir, save_warm_up_checkpoint
 from genotypes import DARTS_V2
 
 embed_size, n_hid, n_hid_last = (850, 850, 850)
@@ -21,12 +21,12 @@ parser = argparse.ArgumentParser(description='PyTorch PennTreeBank/WikiText2 Lan
 parser.add_argument('--bptt', type=int, default=35, help='sequence length')
 parser.add_argument('--clip', type=float, default=0.25, help='gradient clipping')
 parser.add_argument('--log-interval', type=int, default=200, metavar='N', help='report interval')
-parser.add_argument('--lr', type=float, default=10, help='initial learning rate')
+parser.add_argument('--lr', type=float, default=7, help='initial learning rate')
 parser.add_argument('--w-decay', type=float, default=8e-7, help='weight decay applied to all weights')
 parser.add_argument('--epochs', type=int, default=300, help='upper epoch limit')
 parser.add_argument('--save', type=str, default='EXP', help='path to save the final model')
 parser.add_argument('--gpu', type=int, default=1, help='gpu')
-parser.add_argument('--warm_up_epoch', type=int, default=50)
+parser.add_argument('--warm_up_epoch', type=int, default=40, help='warm up the network')
 parser.add_argument('--load_warm_up', type=bool, default=False)
 
 parser.add_argument('--reward', type=int, default=80)
@@ -139,9 +139,8 @@ optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.w_
 if not args.load_warm_up:
     logging.info('-' * 89)
     logging.info('now warm up start')
-    logging.info('-' * 89)
-    epoch_start_time = time.time()
     for epoch in range(1, 1 + args.warm_up_epoch):
+        epoch_start_time = time.time()
         prev, act = bandit.warm_up_sample()
         genotype = bandit.construct_genotype(prev, act)
         train(genotype)
@@ -152,9 +151,9 @@ if not args.load_warm_up:
                                                   math.exp(val_loss)))
         logging.info('-' * 89)
         if epoch > 0 and epoch % 5 == 0:
-            utils.save(model, os.path.join(args.save, 'warm_up_trained.pt'))
-            print('saved to: warm_up_trained.pt')
-    logging.info('-' * 89)
+            save_warm_up_checkpoint(model, optimizer, bandit, args.save)
+            bandit.cell.save_table(os.path.join(args.save, 'table'))
+            logging.info('saved to checkpoint: warm_up_mode, bandit, optimizer')
     logging.info('now warm up end !')
     logging.info('-' * 89)
 
