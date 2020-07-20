@@ -25,7 +25,7 @@ parser.add_argument('--lr', type=float, default=10, help='initial learning rate'
 parser.add_argument('--w-decay', type=float, default=8e-7, help='weight decay applied to all weights')
 parser.add_argument('--epochs', type=int, default=300, help='upper epoch limit')
 parser.add_argument('--save', type=str, default='EXP', help='path to save the final model')
-parser.add_argument('--gpu', type=int, default=3, help='gpu')
+parser.add_argument('--gpu', type=int, default=1, help='gpu')
 parser.add_argument('--warm_up_epoch', type=int, default=50)
 parser.add_argument('--load_warm_up', type=bool, default=False)
 

@@ -52,14 +52,8 @@ class NeuralGraph(object):
         prev_node = []
         activation = []
         for i in range(self.num_node):
-            val = np.min(self.sap_time[i])
-
-            indices = []  # 保证random choice
-            for j in range(len(self.sap_time[i])):
-                if self.sap_time[i][j] == val:
-                    indices.append(j)
+            indices = (np.argwhere(self.sap_time[i] == np.min(self.sap_time[i]))).flatten().tolist()  # 返回所有最小值索引
             index = np.random.choice(indices)
-            
             cur_group = int(index / self.num_op)
             prev_node.append(cur_group)  # 该点的前置节点
             activation.append(index % self.num_op)
@@ -109,6 +103,7 @@ class BanditTS(object):
         return edge
 
         # Bayesian inference
+
     def bayes(self, old_mean, old_std, reward):
         old_precision = 1. / (old_std ** 2)
         noise_precision = 1. / (self.sigma_tilde ** 2)
