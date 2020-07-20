@@ -28,6 +28,7 @@ parser.add_argument('--save', type=str, default='EXP', help='path to save the fi
 parser.add_argument('--gpu', type=int, default=1, help='gpu')
 parser.add_argument('--warm_up_epoch', type=int, default=40, help='warm up the network')
 parser.add_argument('--load_warm_up', type=bool, default=True)
+parser.add_argument('--load_path', type=str, default='warm_up')
 
 parser.add_argument('--reward', type=int, default=80)
 parser.add_argument('--mu0', type=int, default=1)  # 高斯分布的均值
@@ -53,7 +54,7 @@ model = RNNModel(n_tokens, embed_size, n_hid, n_hid_last, dropout, dropout_h, dr
 optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.w_decay)
 bandit = BanditTS(args)
 if args.load_warm_up:
-    model, optimizer, bandit = utils.load_warm_up_checkpoint(model, optimizer, os.path.join(args.save, 'warm_up_trained.pt'))
+    model, optimizer, bandit = utils.load_warm_up_checkpoint(model, optimizer, args.load_path)
 
 parallel_model = model.cuda()
 total_params = sum(x.data.nelement() for x in model.parameters())
@@ -61,7 +62,10 @@ total_params = sum(x.data.nelement() for x in model.parameters())
 
 def init_logging():
     log_format = '%(asctime)s %(message)s'
-    args.save = 'search-{}-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+    if args.load_warm_up:
+        args.save = 'search-{}-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+    else:
+        args.save = 'warm_up'
     create_exp_dir(args.save, scripts_to_save=glob.glob('*.py'))
     logging.basicConfig(stream=sys.stdout, level=logging.INFO, format=log_format, datefmt='%m/%d %I:%M:%S %p')
     fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
