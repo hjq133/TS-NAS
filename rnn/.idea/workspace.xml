@@ -17,8 +17,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/train_search.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="482">
-              <caret line="153" column="72" lean-forward="true" selection-start-line="153" selection-start-column="72" selection-end-line="153" selection-end-column="72" />
+            <state relative-caret-position="380">
+              <caret line="56" lean-forward="true" selection-start-line="56" selection-end-line="56" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
               </folding>
@@ -27,18 +27,9 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$USER_HOME$/.PyCharm2019.1/system/remote_sources/-1163499004/1997931660/codecs.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="167">
-              <caret line="320" selection-start-line="320" selection-end-line="320" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="403">
+            <state relative-caret-position="211">
               <caret line="92" lean-forward="true" selection-start-line="92" selection-end-line="92" />
               <folding>
                 <element signature="e#0#12#0" expanded="true" />
@@ -56,7 +47,11 @@
       <find>utils.save</find>
       <find>load</find>
       <find>save</find>
+      <find>Genotype</find>
     </findStrings>
+    <dirStrings>
+      <dir>$PROJECT_DIR$</dir>
+    </dirStrings>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
@@ -164,12 +159,12 @@
       <workItem from="1594968282808" duration="711000" />
       <workItem from="1595033213674" duration="3662000" />
       <workItem from="1595128965908" duration="14028000" />
-      <workItem from="1595206308509" duration="4367000" />
+      <workItem from="1595206308509" duration="6603000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="22768000" />
+    <option name="totallyTimeSpent" value="25004000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="53" y="25" width="1867" height="1055" extended-state="6" />
@@ -240,7 +235,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/utils.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="403">
+        <state relative-caret-position="211">
           <caret line="92" lean-forward="true" selection-start-line="92" selection-end-line="92" />
           <folding>
             <element signature="e#0#12#0" expanded="true" />
@@ -250,8 +245,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/train_search.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="482">
-          <caret line="153" column="72" lean-forward="true" selection-start-line="153" selection-start-column="72" selection-end-line="153" selection-end-column="72" />
+        <state relative-caret-position="380">
+          <caret line="56" lean-forward="true" selection-start-line="56" selection-end-line="56" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
           </folding>

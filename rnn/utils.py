@@ -87,9 +87,17 @@ def make_dirs(path):
 
 
 def save_warm_up_checkpoint(model, optimizer, bandit, path):
-    torch.save(model, os.path.join(path, 'warm_up_model.pt'))
+    torch.save(model.state_dict(), os.path.join(path, 'warm_up_model.pt'))
     torch.save(optimizer.state_dict(), os.path.join(path, 'optimizer.pt'))
     torch.save({'bandit': bandit}, os.path.join(path, 'bandit.pt'))
+
+
+def load_warm_up_checkpoint(model, optimizer, path):
+    print('load from warm up model:', path)
+    model.load_state_dict(torch.load(os.path.join(path, 'warm_up_model.pt')))
+    optimizer.load_state_dict(torch.load(os.path.join(path, 'optimizer.pt')))
+    bandit = torch.load(path)['bandit']
+    return model, optimizer, bandit
 
 
 def save(model, model_path):

@@ -27,7 +27,7 @@ parser.add_argument('--epochs', type=int, default=300, help='upper epoch limit')
 parser.add_argument('--save', type=str, default='EXP', help='path to save the final model')
 parser.add_argument('--gpu', type=int, default=1, help='gpu')
 parser.add_argument('--warm_up_epoch', type=int, default=40, help='warm up the network')
-parser.add_argument('--load_warm_up', type=bool, default=False)
+parser.add_argument('--load_warm_up', type=bool, default=True)
 
 parser.add_argument('--reward', type=int, default=80)
 parser.add_argument('--mu0', type=int, default=1)  # 高斯分布的均值
@@ -50,8 +50,10 @@ test_data = batchify(corpus.test, test_batch_size)
 n_tokens = len(corpus.dictionary)
 model = RNNModel(n_tokens, embed_size, n_hid, n_hid_last, dropout, dropout_h, dropout_x, dropout_i, dropout_e,
                  cell_cls=DARTSCell)
+optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.w_decay)
+bandit = BanditTS(args)
 if args.load_warm_up:
-    model = utils.load(model, os.path.join(args.save, 'warm_up_trained.pt'))
+    model, optimizer, bandit = utils.load_warm_up_checkpoint(model, optimizer, os.path.join(args.save, 'warm_up_trained.pt'))
 
 parallel_model = model.cuda()
 total_params = sum(x.data.nelement() for x in model.parameters())
@@ -131,11 +133,7 @@ def train(genotype):
     return sum_loss
 
 
-bandit = BanditTS(args)
-logging = init_logging()
 stored_loss = 100000000
-optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.w_decay)
-
 if not args.load_warm_up:
     logging.info('-' * 89)
     logging.info('now warm up start')
