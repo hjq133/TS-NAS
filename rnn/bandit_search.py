@@ -48,7 +48,7 @@ class NeuralGraph(object):
         # Updating the optimal reward
         return prev_node, activation
 
-    def warm_up_network(self):  # warm up random sample
+    def warm_up_network(self):  # warm up random sample, add sample time
         prev_node = []
         activation = []
         for i in range(self.num_node):
@@ -58,6 +58,17 @@ class NeuralGraph(object):
             prev_node.append(cur_group)  # 该点的前置节点
             activation.append(index % self.num_op)
             self.sap_time[i][index] += 1
+        return prev_node, activation
+
+    def random_network(self):  # 不会记录sample次数
+        prev_node = []
+        activation = []
+        for i in range(self.num_node):
+            indices = np.arange(len(self.sap_time[i]))  # 返回所有最小值索引
+            index = np.random.choice(indices)
+            cur_group = int(index / self.num_op)
+            prev_node.append(cur_group)  # 该点的前置节点
+            activation.append(index % self.num_op)
         return prev_node, activation
 
     def save_table(self, path):
@@ -163,3 +174,13 @@ class BanditTS(object):
     def warm_up_sample(self):  # 根据sample次数进行sample, 保证每条edge都被sample到了
         prev_node, activation = self.cell.warm_up_network()
         return prev_node, activation
+
+    def random_sample(self):  # 不会记录sample次数，适合evaluate的时候sample
+        prev_node, activation = self.cell.random_network()
+        return prev_node, activation
+
+    def get_sap_time(self, prev, act):
+        sap_time = []
+        for i, (node, func_id) in enumerate(zip(prev, act)):
+            sap_time.append(self.cell.sap_time[i][node * self.num_op + func_id])
+        return sap_time

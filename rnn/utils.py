@@ -92,11 +92,12 @@ def save_warm_up_checkpoint(model, optimizer, bandit, path):
     torch.save({'bandit': bandit}, os.path.join(path, 'bandit.pt'))
 
 
-def load_warm_up_checkpoint(model, optimizer, path):
+def load_warm_up_checkpoint(model, optimizer, path, device):
     print('load from warm up model:', path)
-    model.load_state_dict(torch.load(os.path.join(path, 'warm_up_model.pt')))
+    model_dict = torch.load(os.path.join(path, 'warm_up_model.pt'), map_location=device)
+    model.load_state_dict(model_dict.state_dict())
     optimizer.load_state_dict(torch.load(os.path.join(path, 'optimizer.pt')))
-    bandit = torch.load(path)['bandit']
+    bandit = torch.load(os.path.join(path, 'bandit.pt'))['bandit']
     return model, optimizer, bandit
 
 

@@ -25,10 +25,11 @@ parser.add_argument('--lr', type=float, default=7, help='initial learning rate')
 parser.add_argument('--w-decay', type=float, default=8e-7, help='weight decay applied to all weights')
 parser.add_argument('--epochs', type=int, default=300, help='upper epoch limit')
 parser.add_argument('--save', type=str, default='EXP', help='path to save the final model')
-parser.add_argument('--gpu', type=int, default=3, help='gpu')
-parser.add_argument('--warm_up_epoch', type=int, default=40, help='warm up the network')
-parser.add_argument('--load_warm_up', type=bool, default=True)
+parser.add_argument('--gpu', type=int, default=0, help='gpu')
+parser.add_argument('--warm_up_epoch', type=int, default=100, help='warm up the network')
+parser.add_argument('--load_warm_up', type=bool, default=False)
 parser.add_argument('--load_path', type=str, default='warm_up')
+parser.add_argument('--test_network', type=bool, default=False)
 
 parser.add_argument('--reward', type=int, default=80)
 parser.add_argument('--mu0', type=int, default=1)  # 高斯分布的均值
@@ -51,12 +52,13 @@ test_data = batchify(corpus.test, test_batch_size)
 n_tokens = len(corpus.dictionary)
 model = RNNModel(n_tokens, embed_size, n_hid, n_hid_last, dropout, dropout_h, dropout_x, dropout_i, dropout_e,
                  cell_cls=DARTSCell)
+parallel_model = model.cuda()
 optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.w_decay)
 bandit = BanditTS(args)
+device = torch.device("cuda:0")
 if args.load_warm_up:
-    model, optimizer, bandit = utils.load_warm_up_checkpoint(model, optimizer, args.load_path)
+    parallel_model, optimizer, bandit = utils.load_warm_up_checkpoint(parallel_model, optimizer, args.load_path, device)
 
-parallel_model = model.cuda()
 total_params = sum(x.data.nelement() for x in model.parameters())
 
 
@@ -137,6 +139,7 @@ def train(genotype):
     return sum_loss / batch
 
 
+init_logging()
 if not args.load_warm_up:
     logging.info('-' * 89)
     logging.info('now warm up start')
@@ -157,7 +160,20 @@ if not args.load_warm_up:
             logging.info('saved to checkpoint: warm_up_mode, bandit, optimizer')
     logging.info('now warm up end !')
     logging.info('-' * 89)
+    exit()
 
+if args.test_network:
+    for i in range(100):
+        prev, act = bandit.random_sample()
+        sap_time = bandit.get_sap_time(prev, act)
+        genotype = bandit.construct_genotype(prev, act)
+        logging.info('-' * 89)
+        val_loss = evaluate(genotype, val_data, eval_batch_size)
+        logging.info("sample_time{}".format(sap_time))
+        logging.info('random sample | valid loss {:5.2f} | valid ppl {:8.2f}'.format(val_loss, math.exp(val_loss)))
+        logging.info('-' * 89)
+
+exit()
 # stored_loss = 100000000
 for epoch in range(1 + args.warm_up_epoch, args.epochs + 1):
     epoch_start_time = time.time()
