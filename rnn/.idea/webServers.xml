@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="7e08fa36-e090-460e-afe7-456a14be94ea" name="mmy_rnn_penn" url="http://219.224.159.11">
+        <fileTransfer host="219.224.159.11" port="11261" rootFolder="/home/mmy" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+          <option name="port" value="11261" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

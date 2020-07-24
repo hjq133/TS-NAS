@@ -1,7 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" serverName="xs_rnn_penn">
+  <component name="PublishConfigData" autoUpload="Always" serverName="mmy@219.224.159.11:11261">
     <serverData>
+      <paths name="mmy@219.224.159.11:11261">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/mmy/hjq133/rnn_penn" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="mmy_rnn_penn">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/hjq133/rnn_penn" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="xs_rnn_penn">
         <serverdata>
           <mappings>
@@ -10,5 +24,6 @@
         </serverdata>
       </paths>
     </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
   </component>
 </project>

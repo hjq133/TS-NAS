@@ -26,10 +26,10 @@ parser.add_argument('--w-decay', type=float, default=8e-7, help='weight decay ap
 parser.add_argument('--epochs', type=int, default=300, help='upper epoch limit')
 parser.add_argument('--save', type=str, default='EXP', help='path to save the final model')
 parser.add_argument('--gpu', type=int, default=0, help='gpu')
-parser.add_argument('--warm_up_epoch', type=int, default=100, help='warm up the network')
-parser.add_argument('--load_warm_up', type=bool, default=False)
-parser.add_argument('--load_path', type=str, default='warm_up')
-parser.add_argument('--test_network', type=bool, default=False)
+parser.add_argument('--warm_up_epoch', type=int, default=300, help='warm up the network')
+parser.add_argument('--load_warm_up', type=bool, default=True)
+parser.add_argument('--load_path', type=str, default='warm_up_100')
+parser.add_argument('--test_network', type=bool, default=True)
 
 parser.add_argument('--reward', type=int, default=80)
 parser.add_argument('--mu0', type=int, default=1)  # 高斯分布的均值
@@ -154,8 +154,8 @@ if not args.load_warm_up:
         #              '| valid ppl {:8.2f}'.format(epoch, (time.time() - epoch_start_time), val_loss,
         #                                           math.exp(val_loss)))
         # logging.info('-' * 89)
-        if epoch > 0 and epoch % 5 == 0:
-            save_warm_up_checkpoint(model, optimizer, bandit, args.save)
+        if epoch > 0 and epoch % 40 == 0:
+            save_warm_up_checkpoint(model, optimizer, bandit, args.save, epoch)
             bandit.cell.save_table(os.path.join(args.save, 'table'))
             logging.info('saved to checkpoint: warm_up_mode, bandit, optimizer')
     logging.info('now warm up end !')
