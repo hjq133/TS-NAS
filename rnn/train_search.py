@@ -25,10 +25,11 @@ parser.add_argument('--lr', type=float, default=7, help='initial learning rate')
 parser.add_argument('--w-decay', type=float, default=8e-7, help='weight decay applied to all weights')
 parser.add_argument('--epochs', type=int, default=300, help='upper epoch limit')
 parser.add_argument('--save', type=str, default='EXP', help='path to save the final model')
-parser.add_argument('--gpu', type=int, default=0, help='gpu')
+parser.add_argument('--gpu', type=int, default=1, help='gpu')
 parser.add_argument('--warm_up_epoch', type=int, default=300, help='warm up the network')
 parser.add_argument('--load_warm_up', type=bool, default=True)
-parser.add_argument('--load_path', type=str, default='warm_up_100')
+parser.add_argument('--load_epoch', type=int, default=200)
+parser.add_argument('--load_path', type=str, default='warm_up')
 parser.add_argument('--test_network', type=bool, default=True)
 
 parser.add_argument('--reward', type=int, default=80)
@@ -55,9 +56,10 @@ model = RNNModel(n_tokens, embed_size, n_hid, n_hid_last, dropout, dropout_h, dr
 parallel_model = model.cuda()
 optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.w_decay)
 bandit = BanditTS(args)
-device = torch.device("cuda:0")
+device = torch.device("cuda:{}".format(args.gpu))
 if args.load_warm_up:
-    parallel_model, optimizer, bandit = utils.load_warm_up_checkpoint(parallel_model, optimizer, args.load_path, device)
+    parallel_model, optimizer, bandit = utils.load_warm_up_checkpoint(parallel_model, optimizer, args.load_path, device,
+                                                                      args.load_epoch)
 
 total_params = sum(x.data.nelement() for x in model.parameters())
 
@@ -65,10 +67,12 @@ total_params = sum(x.data.nelement() for x in model.parameters())
 def init_logging():
     log_format = '%(asctime)s %(message)s'
     if args.load_warm_up:
-        args.save = 'search-{}-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+        args.save = 'search-{}'.format(args.load_epoch)
+        # args.save = 'search-{}-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
     else:
         args.save = 'warm_up'
-    create_exp_dir(args.save, scripts_to_save=glob.glob('*.py'))
+    # create_exp_dir(args.save, scripts_to_save=glob.glob('*.py'))
+    create_exp_dir(args.save)
     logging.basicConfig(stream=sys.stdout, level=logging.INFO, format=log_format, datefmt='%m/%d %I:%M:%S %p')
     fh = logging.FileHandler(os.path.join(args.save, 'log.txt'))
     fh.setFormatter(logging.Formatter(log_format))
@@ -163,15 +167,25 @@ if not args.load_warm_up:
     exit()
 
 if args.test_network:
+    architecture = []
+    ppl = []
+    ppl_op = [[[] for _ in range(i * bandit.num_op)] for i in range(1, bandit.num_node + 1)]
+    train_time = bandit.cell.sap_time
     for i in range(100):
         prev, act = bandit.random_sample()
-        sap_time = bandit.get_sap_time(prev, act)
         genotype = bandit.construct_genotype(prev, act)
-        logging.info('-' * 89)
         val_loss = evaluate(genotype, val_data, eval_batch_size)
-        logging.info("sample_time{}".format(sap_time))
+
+        architecture.append(genotype)
+        ppl.append(math.exp(val_loss))
+        for i in range(bandit.num_node):
+            cur_action = prev[i] * bandit.num_op + act[i]
+            ppl_op[i][cur_action].append(math.exp(val_loss))
+
         logging.info('random sample | valid loss {:5.2f} | valid ppl {:8.2f}'.format(val_loss, math.exp(val_loss)))
         logging.info('-' * 89)
+    param = {'arch': architecture, 'ppl': ppl, 'ppl_op': ppl_op, 'train_time': train_time}
+    torch.save(param, os.path.join(args.save, "para.pth"))
 
 exit()
 # stored_loss = 100000000

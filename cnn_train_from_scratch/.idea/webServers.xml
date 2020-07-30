@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="eaef1dc1-8f13-4eec-a1b5-db6d9a0ebbcf" name="xs_cnn_train_from_scratch" url="http://10.132.25.202">
+        <fileTransfer host="10.132.25.202" port="22" rootFolder="/home/xs" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
