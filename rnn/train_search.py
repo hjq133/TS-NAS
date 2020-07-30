@@ -2,6 +2,7 @@ import numpy as np
 import sys, os, argparse, data, time, logging, gc, math, glob
 import torch.nn as nn
 import torch
+from genotypes import Genotype
 import utils
 import torch.backends.cudnn as cudnn
 from bandit_search import BanditTS
@@ -88,6 +89,20 @@ def summary(total_loss, start_time, batch):
                                                      optimizer.param_groups[0]['lr'],
                                                      elapsed * 1000 / args.log_interval, cur_loss,
                                                      math.exp(cur_loss)))
+
+
+def eval_layer(genotype):
+    archs = []
+    for i in range(len(genotype.recurrent)):
+        recurrent = []
+        concat = range(1, bandit.num_node + 1)
+        for j, (name, node) in enumerate(genotype.recurrent):
+            if i == j:
+                name = 'identity'
+            recurrent.append((name, node))
+        new_genotype = Genotype(recurrent=recurrent, concat=concat)
+        archs.append(new_genotype)
+    return archs
 
 
 def evaluate(genotype, data_source, batch_size=10):
