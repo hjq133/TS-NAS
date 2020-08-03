@@ -26,7 +26,7 @@ parser.add_argument('--lr_min', type=float, default=0.001, help='min learning ra
 parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
 parser.add_argument('--wd', type=float, default=3e-4, help='weight decay')
 parser.add_argument('--report_freq', type=float, default=50, help='report frequency')
-parser.add_argument('--gpu', type=int, default=3, help='gpu device id')
+parser.add_argument('--gpu', type=int, default=1, help='gpu device id')
 parser.add_argument('--epochs', type=int, default=50, help='num of training epochs')
 parser.add_argument('--init_ch', type=int, default=16, help='num of init channels')
 parser.add_argument('--layers', type=int, default=8, help='total number of layers')
@@ -149,7 +149,6 @@ def train(train_queue, model, criterion, optimizer, bandit):
 
 def infer(valid_queue, model, criterion, bandit):
     """
-
     :param valid_queue:
     :param model:
     :param criterion:

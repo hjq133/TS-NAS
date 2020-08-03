@@ -158,7 +158,7 @@ class Network(nn.Module):
 
         # stem_multiplier is for stem network,
         # and multiplier is for general cell
-        c_curr = stem_multiplier * c  # 3*16
+        c_curr = stem_multiplier * c  # 3 * 16
         # stem network, convert 3 channel to c_curr
         self.stem = nn.Sequential(  # 3 => 48
             nn.Conv2d(3, c_curr, 3, padding=1, bias=False),
