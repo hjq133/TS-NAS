@@ -23,7 +23,7 @@ class NeuralGraph(object):
         self.sap_time = [np.zeros([self.num_op * (i + 2)]) for i in range(self.num_node)]  # 记录sample次数
         self.reward = [np.zeros(self.num_op * (i + 2)) for i in range(self.num_node)]
         self.pruned_index = [[] for _ in range(self.num_node)]
-        self.sample_index = [np.arange(self.num_op * (i + 2)) for i in range(self.num_node)]
+        # self.sample_index = [np.arange(self.num_op * (i + 2)) for i in range(self.num_node)]
 
     def overwrite_edge_weight(self, edge_reward):
         """
@@ -42,13 +42,14 @@ class NeuralGraph(object):
         prev_node = []
         activation = []
         for i in range(self.num_node):
+            self.reward[i][self.pruned_index[i]] = np.nan
             for _ in range(top_k):  # 保留topk的边
-                index = np.argmax(self.reward[i])
+                index = np.nanargmax(self.reward[i])
                 cur_group = int(index / self.num_op)
                 prev_node.append(cur_group)  # 该点的前置节点
                 activation.append(index % self.num_op)
                 self.sap_time[i][index] += 1  # 记录采样次数
-                self.reward[i][cur_group * self.num_op: (cur_group + 1) * self.num_op] = -9999  # 避免重复采样同一个前驱节点
+                self.reward[i][cur_group * self.num_op: (cur_group + 1) * self.num_op] = np.nan  # 避免重复采样同一个前驱节点
         return prev_node, activation
 
     def warm_up_network(self, top_k):  # 保留k条前缀边

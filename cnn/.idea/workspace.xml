@@ -2,9 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c914a6f7-4700-45a1-95c7-1460ab13f8af" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bandit_search.py" beforeDir="false" afterPath="$PROJECT_DIR$/bandit_search.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_search.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_search.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../cnn_train_from_scratch/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../cnn_train_from_scratch/.idea/deployment.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../cnn_train_from_scratch/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../cnn_train_from_scratch/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../cnn_train_from_scratch/.idea/remote-mappings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../cnn_train_from_scratch/.idea/remote-mappings.xml" afterDir="false" />
@@ -97,8 +95,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/bandit_search.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1096">
-              <caret line="206" column="28" lean-forward="true" selection-start-line="206" selection-start-column="28" selection-end-line="206" selection-end-column="28" />
+            <state relative-caret-position="264">
+              <caret line="26" lean-forward="true" selection-start-line="26" selection-end-line="26" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
               </folding>
@@ -165,7 +163,7 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="7">
+  <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="53" />
     <option name="y" value="27" />
     <option name="width" value="934" />
@@ -319,12 +317,12 @@
       <workItem from="1596612758711" duration="3745000" />
       <workItem from="1596672090365" duration="7069000" />
       <workItem from="1596800432411" duration="5089000" />
-      <workItem from="1596866905299" duration="1187000" />
+      <workItem from="1596866905299" duration="1792000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="131868000" />
+    <option name="totallyTimeSpent" value="132473000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -570,8 +568,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/bandit_search.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1096">
-          <caret line="206" column="28" lean-forward="true" selection-start-line="206" selection-start-column="28" selection-end-line="206" selection-end-column="28" />
+        <state relative-caret-position="264">
+          <caret line="26" lean-forward="true" selection-start-line="26" selection-end-line="26" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
           </folding>
