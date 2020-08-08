@@ -26,13 +26,13 @@ parser.add_argument('--lr_min', type=float, default=0.001, help='min learning ra
 parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
 parser.add_argument('--wd', type=float, default=3e-4, help='weight decay')
 parser.add_argument('--report_freq', type=float, default=50, help='report frequency')
-parser.add_argument('--gpu', type=int, default=1, help='gpu device id')
+parser.add_argument('--gpu', type=int, default=0, help='gpu device id')
 parser.add_argument('--epochs', type=int, default=50, help='num of training epochs')
 parser.add_argument('--init_ch', type=int, default=16, help='num of init channels')
 parser.add_argument('--layers', type=int, default=8, help='total number of layers')
 parser.add_argument('--model_path', type=str, default='saved_models', help='path to save the model')
 parser.add_argument('--cutout', action='store_true', default=True, help='use cutout')
-parser.add_argument('--cutout_len', type=int, default=16, help='cutout length')
+parser.add_argument('--cutout_length', type=int, default=16, help='cutout length')
 parser.add_argument('--drop_path_prob', type=float, default=0.3, help='drop path probability')
 parser.add_argument('--exp_path', type=str, default='search', help='experiment name')
 parser.add_argument('--seed', type=int, default=3, help='random seed')
@@ -74,12 +74,12 @@ def main():
 
     train_queue = torch.utils.data.DataLoader(
         train_data, batch_size=args.batchsz,
-        sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[:split]),
+        sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[:split - 37000]),
         pin_memory=True, num_workers=2)
 
     valid_queue = torch.utils.data.DataLoader(
         train_data, batch_size=args.batchsz,
-        sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[split:]),
+        sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[12000 + split:]),
         pin_memory=True, num_workers=2)
 
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, float(args.epochs), eta_min=args.lr_min)
@@ -99,11 +99,11 @@ def main():
         # logging.info('train acc: %f', train_acc)
 
         # validation
-        valid_acc, valid_obj = infer(valid_queue, model, criterion, bandit)
+        valid_acc, valid_obj = infer(valid_queue, model, criterion, genotype)
         reward = valid_acc  # TODO how to set reward value, reward should be less and less as T go up
-        bandit.update_observation(n_prev, n_act, r_prev, r_act, reward.item())
+        bandit.update_observation(n_prev, n_act, r_prev, r_act, reward)
         logging.info('valid acc: %f', valid_acc)
-        bandit.prune_op(epoch)
+        bandit.prune(epoch)
         # utils.save(model, os.path.join(args.exp_path, 'search.pt'))
 
 
@@ -145,19 +145,17 @@ def train(train_queue, model, criterion, optimizer, bandit, genotype):
     return top1.avg, losses.avg
 
 
-def infer(valid_queue, model, criterion, bandit):
+def infer(valid_queue, model, criterion, genotype):
     """
     :param valid_queue:
     :param model:
     :param criterion:
+    :param genotype
     :return:
     """
     losses = utils.AverageMeter()
     top1 = utils.AverageMeter()
     top5 = utils.AverageMeter()
-
-    n_prev, n_act, r_prev, r_act = bandit.pick_action()  # TODO derive
-    genotype = bandit.construct_genotype(n_prev, n_act, r_prev, r_act)
 
     model.eval()
     with torch.no_grad():
