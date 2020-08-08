@@ -181,24 +181,25 @@ class BanditTS(object):
         repeat_num = 10
         redu_edge = np.zeros(self.num_op * (index + 2))
         norm_edge = np.zeros(self.num_op * (index + 2))  # 随机初始化
-        for j in range((index + 2) * self.num_op):
-            mean, std = self.posterior_norm[index][j]
-            value = 0
-            for i in range(repeat_num):
-                value += mean + std * np.random.randn()
-            norm_edge[j] = value / repeat_num
+        for edge in range(index + 2):
+            for j in range(edge * self.num_op, (edge + 1) * self.num_op):
+                mean, std = self.posterior_norm[index][j]
+                value = 0
+                for i in range(repeat_num):
+                    value += mean + std * np.random.randn()
+                norm_edge[j] = value / repeat_num
 
-            mean, std = self.posterior_redu[index][j]
-            value = 0
-            for i in range(repeat_num):
-                value += mean + std * np.random.randn()
-            redu_edge[j] = value / repeat_num
-        norm_edge[self.norm_cell.pruned_index[index]] = np.nan
-        redu_edge[self.redu_cell.pruned_index[index]] = np.nan
-        norm_pruned = np.nanargmin(norm_edge)
-        redu_pruned = np.nanargmin(redu_edge)
-        self.norm_cell[index].append(norm_pruned)
-        self.redu_cell[index].append(redu_pruned)
+                mean, std = self.posterior_redu[index][j]
+                value = 0
+                for i in range(repeat_num):
+                    value += mean + std * np.random.randn()
+                redu_edge[j] = value / repeat_num
+            norm_edge[self.norm_cell.pruned_index[index]] = np.nan
+            redu_edge[self.redu_cell.pruned_index[index]] = np.nan
+            norm_pruned = np.nanargmin(norm_edge[edge * self.num_op: (edge + 1) * self.num_op])
+            redu_pruned = np.nanargmin(redu_edge[edge * self.num_op: (edge + 1) * self.num_op])
+            self.norm_cell[index].append(norm_pruned)
+            self.redu_cell[index].append(redu_pruned)
 
     def prune_op(self, epoch):
         if epoch in [40, 75, 105, 130, 150, 165, 175]:
