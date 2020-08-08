@@ -91,45 +91,43 @@ def main():
         lr = scheduler.get_lr()[0]
         logging.info('\nEpoch: %d lr: %e', epoch, lr)
 
+        n_prev, n_act, r_prev, r_act = bandit.pick_action()
+        genotype = bandit.construct_genotype(n_prev, n_act, r_prev, r_act)
+
         # training
-        train_acc, train_obj = train(train_queue, model, criterion, optimizer, bandit)
-        logging.info('train acc: %f', train_acc)
+        train_acc, train_obj = train(train_queue, model, criterion, optimizer, bandit, genotype)
+        # logging.info('train acc: %f', train_acc)
 
         # validation
         valid_acc, valid_obj = infer(valid_queue, model, criterion, bandit)
+        reward = valid_acc  # TODO how to set reward value, reward should be less and less as T go up
+        bandit.update_observation(n_prev, n_act, r_prev, r_act, reward.item())
         logging.info('valid acc: %f', valid_acc)
+        bandit.prune_op(epoch)
+        # utils.save(model, os.path.join(args.exp_path, 'search.pt'))
 
-        utils.save(model, os.path.join(args.exp_path, 'search.pt'))
 
-
-def train(train_queue, model, criterion, optimizer, bandit):
+def train(train_queue, model, criterion, optimizer, bandit, genotype):
     """
     :param train_queue: train loader
     :param model: network
-    :param criterion:
-    :param optimizer:
-    :param bandit:
+    :param criterion
+    :param optimizer
+    :param bandit
+    :param genotype
     :return:
     """
     losses = utils.AverageMeter()
     top1 = utils.AverageMeter()
     top5 = utils.AverageMeter()
     for step, (x, target) in enumerate(train_queue):  # max step > 500
-
         batchsz = x.size(0)
         model.train()
-
         # [b, 3, 32, 32], [40]
-        n_prev, n_act, r_prev, r_act = bandit.pick_action()
-        genotype = bandit.construct_genotype(n_prev, n_act, r_prev, r_act)
 
         x, target = x.to(device), target.cuda(non_blocking=True)
         logits = model(x, genotype)
         loss = criterion(logits, target)
-
-        # update bandit param
-        reward = np.log(args.reward_c) / loss  # TODO how to set reward value, reward should be less and less as T go up
-        bandit.update_observation(n_prev, n_act, r_prev, r_act, reward.item())
         # update weight
         optimizer.zero_grad()
         loss.backward()

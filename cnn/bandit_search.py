@@ -22,6 +22,8 @@ class NeuralGraph(object):
         self.num_op = num_op
         self.sap_time = [np.zeros([self.num_op * (i + 2)]) for i in range(self.num_node)]  # 记录sample次数
         self.reward = [np.zeros(self.num_op * (i + 2)) for i in range(self.num_node)]
+        self.pruned_index = [[] for _ in range(self.num_node)]
+        self.sample_index = [np.arange(self.num_op * (i + 2)) for i in range(self.num_node)]
 
     def overwrite_edge_weight(self, edge_reward):
         """
@@ -173,3 +175,36 @@ class BanditTS(object):
         norm_prev, norm_act = self.norm_cell.warm_up_network(self.top_k)
         redu_prev, redu_act = self.redu_cell.warm_up_network(self.top_k)
         return norm_prev, norm_act, redu_prev, redu_act
+
+    def prune_op(self, index):
+        repeat_num = 10
+        redu_edge = np.zeros(self.num_op * (index + 2))
+        norm_edge = np.zeros(self.num_op * (index + 2))  # 随机初始化
+        for j in range((index + 2) * self.num_op):
+            mean, std = self.posterior_norm[index][j]
+            value = 0
+            for i in range(repeat_num):
+                value += mean + std * np.random.randn()
+            norm_edge[j] = value / repeat_num
+
+            mean, std = self.posterior_redu[index][j]
+            value = 0
+            for i in range(repeat_num):
+                value += mean + std * np.random.randn()
+            redu_edge[j] = value / repeat_num
+        norm_edge[self.norm_cell.pruned_index[index]] = np.nan
+        redu_edge[self.redu_cell.pruned_index[index]] = np.nan
+        norm_pruned = np.nanargmin(norm_edge)
+        redu_pruned = np.nanargmin(redu_edge)
+        self.norm_cell[index].append(norm_pruned)
+        self.redu_cell[index].append(redu_pruned)
+
+    def prune_op(self, epoch):
+        if epoch in [40, 75, 105, 130, 150, 165, 175]:
+            self.prune_op(0)
+        if epoch in [80, 130, 170, 200, 220, 240, 250]:
+            self.prune_op(1)
+        if epoch in [100, 150, 190, 250, 280, 310, 330]:
+            self.prune_op(2)
+        if epoch in [120, 180, 230, 270, 300, 320, 340]:
+            self.prune_op(3)
