@@ -2,9 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c914a6f7-4700-45a1-95c7-1460ab13f8af" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/cnn.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/cnn.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bandit_search.py" beforeDir="false" afterPath="$PROJECT_DIR$/bandit_search.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/train_search.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_search.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../cnn_train_from_scratch/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../cnn_train_from_scratch/.idea/deployment.xml" afterDir="false" />
@@ -30,8 +27,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/train_search.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="139">
-              <caret line="97" column="21" selection-start-line="97" selection-start-column="21" selection-end-line="97" selection-end-column="21" />
+            <state relative-caret-position="296">
+              <caret line="99" lean-forward="true" selection-start-line="99" selection-end-line="99" />
               <folding>
                 <element signature="e#0#26#0" expanded="true" />
               </folding>
@@ -42,8 +39,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/bandit_search.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-31">
-              <caret line="151" lean-forward="true" selection-start-line="151" selection-end-line="151" />
+            <state relative-caret-position="139">
+              <caret line="57" column="8" selection-start-line="57" selection-start-column="8" selection-end-line="57" selection-end-column="8" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
               </folding>
@@ -108,8 +105,8 @@
         <option value="$PROJECT_DIR$/utils.py" />
         <option value="$PROJECT_DIR$/code_for_test/test_func_code.py" />
         <option value="$PROJECT_DIR$/model_search.py" />
-        <option value="$PROJECT_DIR$/train_search.py" />
         <option value="$PROJECT_DIR$/bandit_search.py" />
+        <option value="$PROJECT_DIR$/train_search.py" />
       </list>
     </option>
   </component>
@@ -271,12 +268,12 @@
       <workItem from="1596873099962" duration="228000" />
       <workItem from="1596873368504" duration="2546000" />
       <workItem from="1596876610195" duration="635000" />
-      <workItem from="1596881635932" duration="2207000" />
+      <workItem from="1596881635932" duration="3248000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="141298000" />
+    <option name="totallyTimeSpent" value="142339000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -379,6 +376,16 @@
           <line>199</line>
           <option name="timeStamp" value="29" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/train_search.py</url>
+          <line>95</line>
+          <option name="timeStamp" value="30" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/train_search.py</url>
+          <line>94</line>
+          <option name="timeStamp" value="31" />
+        </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
@@ -391,7 +398,7 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/cnn$test_func_code.coverage" NAME="test_func_code Coverage Results" MODIFIED="1596452381669" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/code_for_test" />
-    <SUITE FILE_PATH="coverage/cnn$train_search.coverage" NAME="train_search Coverage Results" MODIFIED="1596883453275" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/cnn$train_search.coverage" NAME="train_search Coverage Results" MODIFIED="1596884883065" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$USER_HOME$/anaconda3/envs/torch/lib/python3.7/site-packages/torch/optim/lr_scheduler.py">
@@ -538,8 +545,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/bandit_search.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-31">
-          <caret line="151" lean-forward="true" selection-start-line="151" selection-end-line="151" />
+        <state relative-caret-position="139">
+          <caret line="57" column="8" selection-start-line="57" selection-start-column="8" selection-end-line="57" selection-end-column="8" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
           </folding>
@@ -548,8 +555,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/train_search.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="139">
-          <caret line="97" column="21" selection-start-line="97" selection-start-column="21" selection-end-line="97" selection-end-column="21" />
+        <state relative-caret-position="296">
+          <caret line="99" lean-forward="true" selection-start-line="99" selection-end-line="99" />
           <folding>
             <element signature="e#0#26#0" expanded="true" />
           </folding>

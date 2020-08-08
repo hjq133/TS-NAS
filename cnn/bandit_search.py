@@ -202,7 +202,6 @@ class BanditTS(object):
             self.redu_cell.pruned_index[index].append(redu_pruned)
 
     def prune(self, epoch):
-        self.prune_op(0)
         if epoch in [40, 75, 105, 130, 150, 165, 175]:
             self.prune_op(0)
         if epoch in [80, 130, 170, 200, 220, 240, 250]:
