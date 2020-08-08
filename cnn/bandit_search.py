@@ -56,8 +56,9 @@ class NeuralGraph(object):
         prev_node = []
         activation = []
         for i in range(self.num_node):
-            for _ in range(top_k):  # 保留topk的边
-                index = np.argmin(self.sap_time[i])
+            for edge in range(top_k):  # 保留topk的边
+                indices = (np.argwhere(self.sap_time[i] == np.min(self.sap_time[i]))).flatten().tolist()  # 返回所有最小值索引
+                index = np.random.choice(indices)
                 cur_group = int(index / self.num_op)
                 prev_node.append(cur_group)  # 该点的前置节点
                 activation.append(index % self.num_op)

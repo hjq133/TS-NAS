@@ -28,7 +28,7 @@ parser.add_argument('--wd', type=float, default=3e-4, help='weight decay')
 parser.add_argument('--report_freq', type=float, default=50, help='report frequency')
 parser.add_argument('--gpu', type=int, default=0, help='gpu device id')
 parser.add_argument('--epochs', type=int, default=300, help='num of training epochs')
-parser.add_argument('--warm_up_epoch', type=int, default=50, help='num of warm up training epochs')
+parser.add_argument('--warm_up_epochs', type=int, default=80, help='num of warm up training epochs')
 parser.add_argument('--train_epoch', type=int, default=400, help='train the final architecture')
 parser.add_argument('--init_ch', type=int, default=16, help='num of init channels')
 parser.add_argument('--layers', type=int, default=8, help='total number of layers')
@@ -92,16 +92,17 @@ def main():
     for epoch in range(args.warm_up_epochs):
         scheduler.step()
         lr = scheduler.get_lr()[0]
-        logging.info('\nEpoch: %d lr: %e', epoch, lr)
+        logging.info('\nwarm up Epoch: %d lr: %e', epoch, lr)
         n_prev, n_act, r_prev, r_act = bandit.warm_up_sample()  # 优先选择没有训练的
         genotype = bandit.construct_genotype(n_prev, n_act, r_prev, r_act)
         train(train_queue, model, criterion, optimizer, bandit, genotype)
     logging.info("warm up end")
 
+    logging.info("search start")
     for epoch in range(args.epochs):
         scheduler.step()
         lr = scheduler.get_lr()[0]
-        logging.info('\nEpoch: %d lr: %e', epoch, lr)
+        logging.info('\nsearch Epoch: %d lr: %e', epoch, lr)
 
         n_prev, n_act, r_prev, r_act = bandit.pick_action()
         genotype = bandit.construct_genotype(n_prev, n_act, r_prev, r_act)
@@ -116,6 +117,29 @@ def main():
         logging.info('valid acc: %f', valid_acc)
         bandit.prune(epoch)
         # utils.save(model, os.path.join(args.exp_path, 'search.pt'))
+    logging.info('search end')
+    logging.info('-' * 89)
+    n_prev, n_act, r_prev, r_act = bandit.pick_action()
+    genotype = bandit.construct_genotype(n_prev, n_act, r_prev, r_act)
+    logging.info(genotype)
+    logging.info('-' * 89)
+    logging.info('train final start')
+    for epoch in range(args.train_epoch):
+        scheduler.step()
+        lr = scheduler.get_lr()[0]
+        logging.info('\ntrain final Epoch: %d lr: %e', epoch, lr)
+        # training
+        train_acc, train_obj = train(train_queue, model, criterion, optimizer, bandit, genotype)
+        logging.info('train acc: %f', train_acc)
+        # validation
+        valid_acc, valid_obj = infer(valid_queue, model, criterion, genotype)
+        logging.info('valid acc: %f', valid_acc)
+
+    logging.info('train final end')
+    logging.info('-' * 89)
+    logging.info('-' * 89)
+    logging.info('test start')
+    logging.info('test end')
 
 
 def train(train_queue, model, criterion, optimizer, bandit, genotype):
