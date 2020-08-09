@@ -155,6 +155,7 @@ class Network(nn.Module):
         self.criterion = criterion
         self.steps = steps
         self.multiplier = multiplier
+        self.genotype = None
 
         # stem_multiplier is for stem network,
         # and multiplier is for general cell
@@ -192,7 +193,7 @@ class Network(nn.Module):
         # it indicates the input channel number
         self.classifier = nn.Linear(cp, num_classes)
 
-    def forward(self, x, genotype):
+    def forward(self, x):
         """
         in: torch.Size([3, 3, 32, 32])
         stem: torch.Size([3, 48, 32, 32])
@@ -215,7 +216,7 @@ class Network(nn.Module):
         s0 = s1 = self.stem(x)  # [b, 3, 32, 32] => [b, 48, 32, 32]
         # print('stem:', s0.shape)
         for i, cell in enumerate(self.cells):
-            s0, s1 = s1, cell(s0, s1, genotype)  # [40, 64, 32, 32]
+            s0, s1 = s1, cell(s0, s1, self.genotype)  # [40, 64, 32, 32]
         # s1 is the last cell's output
         out = self.global_pooling(s1)
         # print('pool', out.shape)

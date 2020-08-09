@@ -28,7 +28,7 @@ parser.add_argument('--wd', type=float, default=3e-4, help='weight decay')
 parser.add_argument('--report_freq', type=float, default=50, help='report frequency')
 parser.add_argument('--gpu', type=str, default="2,3", help='gpu device ids')
 parser.add_argument('--search_epochs', type=int, default=300, help='num of search epochs')
-parser.add_argument('--warm_up_epochs', type=int, default=0, help='num of warm up training epochs')
+parser.add_argument('--warm_up_epochs', type=int, default=80, help='num of warm up training epochs')
 parser.add_argument('--train_epochs', type=int, default=400, help='train the final architecture')
 parser.add_argument('--init_ch', type=int, default=16, help='num of init channels')
 parser.add_argument('--layers', type=int, default=8, help='total number of layers')
@@ -66,7 +66,7 @@ def main():
     criterion = nn.CrossEntropyLoss().cuda()
     model = Network(args.init_ch, 10, args.layers, criterion).cuda()
     if len(device_ids) > 1:
-        model = torch.nn.DaraParallel(model)
+        model = torch.nn.DataParallel(model)
     logging.info("Total param size = %f MB", utils.count_parameters_in_MB(model))
     # this is the optimizer to optimize
     optimizer = optim.SGD(model.parameters(), args.lr, momentum=args.momentum, weight_decay=args.wd)
@@ -98,7 +98,8 @@ def main():
         logging.info('\nwarm up Epoch: %d lr: %e', epoch, lr)
         n_prev, n_act, r_prev, r_act = bandit.warm_up_sample()  # 优先选择没有训练的
         genotype = bandit.construct_genotype(n_prev, n_act, r_prev, r_act)
-        train(train_queue, model, criterion, optimizer, bandit, genotype)
+        model.genotype = genotype
+        train(train_queue, model, criterion, optimizer, bandit)
     logging.info("warm up end")
     utils.save(model, os.path.join(args.exp_path, 'warm_up.pt'))
 
@@ -110,12 +111,12 @@ def main():
 
         n_prev, n_act, r_prev, r_act = bandit.pick_action()
         genotype = bandit.construct_genotype(n_prev, n_act, r_prev, r_act)
-
+        model.genotype = genotype
         # training
-        train_acc, train_obj = train(train_queue, model, criterion, optimizer, bandit, genotype)
+        train_acc, train_obj = train(train_queue, model, criterion, optimizer, bandit)
 
         # validation
-        valid_acc, valid_obj = infer(valid_queue, model, criterion, genotype)
+        valid_acc, valid_obj = infer(valid_queue, model, criterion)
         reward = valid_acc  # TODO how to set reward value, reward should be less and less as T go up
         bandit.update_observation(n_prev, n_act, r_prev, r_act, reward)
         logging.info('valid acc: %f', valid_acc)
@@ -136,10 +137,10 @@ def main():
         lr = scheduler.get_lr()[0]
         logging.info('\ntrain final Epoch: %d lr: %e', epoch, lr)
         # training
-        train_acc, train_obj = train(train_queue, model, criterion, optimizer, bandit, genotype)
+        train_acc, train_obj = train(train_queue, model, criterion, optimizer, bandit)
         logging.info('train acc: %f', train_acc)
         # validation
-        valid_acc, valid_obj = infer(valid_queue, model, criterion, genotype)
+        valid_acc, valid_obj = infer(valid_queue, model, criterion)
         logging.info('valid acc: %f', valid_acc)
 
     utils.save(model, os.path.join(args.exp_path, 'train_final.pt'))
@@ -150,14 +151,13 @@ def main():
     logging.info('test end')
 
 
-def train(train_queue, model, criterion, optimizer, bandit, genotype):
+def train(train_queue, model, criterion, optimizer, bandit):
     """
     :param train_queue: train loader
     :param model: network
     :param criterion
     :param optimizer
     :param bandit
-    :param genotype
     :return:
     """
     losses = utils.AverageMeter()
@@ -169,7 +169,7 @@ def train(train_queue, model, criterion, optimizer, bandit, genotype):
         # [b, 3, 32, 32], [40]
 
         x, target = x.cuda(), target.cuda(non_blocking=True)
-        logits = model(x, genotype)
+        logits = model(x)
         loss = criterion(logits, target)
         # update weight
         optimizer.zero_grad()
@@ -188,12 +188,11 @@ def train(train_queue, model, criterion, optimizer, bandit, genotype):
     return top1.avg, losses.avg
 
 
-def infer(valid_queue, model, criterion, genotype):
+def infer(valid_queue, model, criterion):
     """
     :param valid_queue:
     :param model:
     :param criterion:
-    :param genotype
     :return:
     """
     losses = utils.AverageMeter()
@@ -207,7 +206,7 @@ def infer(valid_queue, model, criterion, genotype):
             x, target = x.cuda(), target.cuda(non_blocking=True)
             batchsz = x.size(0)
 
-            logits = model(x, genotype)
+            logits = model(x)
             loss = criterion(logits, target)
 
             prec1, prec5 = utils.accuracy(logits, target, topk=(1, 5))
