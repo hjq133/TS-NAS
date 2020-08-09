@@ -26,7 +26,7 @@ parser.add_argument('--lr_min', type=float, default=0.001, help='min learning ra
 parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
 parser.add_argument('--wd', type=float, default=3e-4, help='weight decay')
 parser.add_argument('--report_freq', type=float, default=50, help='report frequency')
-parser.add_argument('--gpu', type=int, default=2, help='gpu device id')
+parser.add_argument('--gpu', type=str, default="2,3", help='gpu device ids')
 parser.add_argument('--search_epochs', type=int, default=300, help='num of search epochs')
 parser.add_argument('--warm_up_epochs', type=int, default=0, help='num of warm up training epochs')
 parser.add_argument('--train_epochs', type=int, default=400, help='train the final architecture')
@@ -42,7 +42,9 @@ parser.add_argument('--grad_clip', type=float, default=5, help='gradient clippin
 parser.add_argument('--train_portion', type=float, default=0.75, help='portion of training/val splitting')  # 区分训练集和测试集合
 args = parser.parse_args()
 
-args.exp_path += str(args.gpu)
+args.exp_path += args.gpu
+os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+device_ids = range(torch.cuda.device_count())
 utils.create_exp_dir(args.exp_path, scripts_to_save=glob.glob('*.py'))
 
 log_format = '%(asctime)s %(message)s'
@@ -50,9 +52,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO, format=log_format, da
 fh = logging.FileHandler(os.path.join(args.exp_path, 'log.txt'))
 fh.setFormatter(logging.Formatter(log_format))
 logging.getLogger().addHandler(fh)
-
-os.environ['CUDA_VISIBLE_DEVICES'] = str(args.gpu)
-device = torch.device('cuda:0')
+# device = torch.device('cuda:0')
 
 
 def main():
@@ -61,10 +61,12 @@ def main():
     cudnn.enabled = True
     torch.manual_seed(args.seed)
 
-    logging.info('GPU device = %d' % args.gpu)
+    logging.info('GPU device = %s' % args.gpu)
     logging.info("args = %s", args)
-    criterion = nn.CrossEntropyLoss().to(device)
-    model = Network(args.init_ch, 10, args.layers, criterion).to(device)
+    criterion = nn.CrossEntropyLoss().cuda()
+    model = Network(args.init_ch, 10, args.layers, criterion).cuda()
+    if len(device_ids) > 1:
+        model = torch.nn.DaraParallel(model)
     logging.info("Total param size = %f MB", utils.count_parameters_in_MB(model))
     # this is the optimizer to optimize
     optimizer = optim.SGD(model.parameters(), args.lr, momentum=args.momentum, weight_decay=args.wd)
@@ -166,7 +168,7 @@ def train(train_queue, model, criterion, optimizer, bandit, genotype):
         model.train()
         # [b, 3, 32, 32], [40]
 
-        x, target = x.to(device), target.cuda(non_blocking=True)
+        x, target = x.cuda(), target.cuda(non_blocking=True)
         logits = model(x, genotype)
         loss = criterion(logits, target)
         # update weight
@@ -202,7 +204,7 @@ def infer(valid_queue, model, criterion, genotype):
     with torch.no_grad():
         for step, (x, target) in enumerate(valid_queue):
 
-            x, target = x.to(device), target.cuda(non_blocking=True)
+            x, target = x.cuda(), target.cuda(non_blocking=True)
             batchsz = x.size(0)
 
             logits = model(x, genotype)
