@@ -26,10 +26,10 @@ parser.add_argument('--lr_min', type=float, default=0.001, help='min learning ra
 parser.add_argument('--momentum', type=float, default=0.9, help='momentum')
 parser.add_argument('--wd', type=float, default=3e-4, help='weight decay')
 parser.add_argument('--report_freq', type=float, default=50, help='report frequency')
-parser.add_argument('--gpu', type=int, default=0, help='gpu device id')
-parser.add_argument('--epochs', type=int, default=300, help='num of training epochs')
-parser.add_argument('--warm_up_epochs', type=int, default=80, help='num of warm up training epochs')
-parser.add_argument('--train_epoch', type=int, default=400, help='train the final architecture')
+parser.add_argument('--gpu', type=int, default=2, help='gpu device id')
+parser.add_argument('--search_epochs', type=int, default=300, help='num of search epochs')
+parser.add_argument('--warm_up_epochs', type=int, default=0, help='num of warm up training epochs')
+parser.add_argument('--train_epochs', type=int, default=400, help='train the final architecture')
 parser.add_argument('--init_ch', type=int, default=16, help='num of init channels')
 parser.add_argument('--layers', type=int, default=8, help='total number of layers')
 parser.add_argument('--model_path', type=str, default='saved_models', help='path to save the model')
@@ -84,7 +84,8 @@ def main():
         sampler=torch.utils.data.sampler.SubsetRandomSampler(indices[12000 + split:]),
         pin_memory=True, num_workers=2)
 
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, float(args.epochs), eta_min=args.lr_min)
+    total_epochs = args.warm_up_epochs + args.search_epochs + args.train_epochs
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, float(total_epochs), eta_min=args.lr_min)
 
     bandit = BanditTS(args)
 
@@ -97,9 +98,10 @@ def main():
         genotype = bandit.construct_genotype(n_prev, n_act, r_prev, r_act)
         train(train_queue, model, criterion, optimizer, bandit, genotype)
     logging.info("warm up end")
+    utils.save(model, os.path.join(args.exp_path, 'warm_up.pt'))
 
     logging.info("search start")
-    for epoch in range(args.epochs):
+    for epoch in range(args.search_epochs):
         scheduler.step()
         lr = scheduler.get_lr()[0]
         logging.info('\nsearch Epoch: %d lr: %e', epoch, lr)
@@ -117,6 +119,9 @@ def main():
         logging.info('valid acc: %f', valid_acc)
         bandit.prune(epoch)
         # utils.save(model, os.path.join(args.exp_path, 'search.pt'))
+    utils.save(model, os.path.join(args.exp_path, 'search.pt'))
+    torch.save(bandit, os.path.join(args.exp_path, 'bandit.pt'))
+    logging.info('save bandit, model !')
     logging.info('search end')
     logging.info('-' * 89)
     n_prev, n_act, r_prev, r_act = bandit.pick_action()
@@ -124,7 +129,7 @@ def main():
     logging.info(genotype)
     logging.info('-' * 89)
     logging.info('train final start')
-    for epoch in range(args.train_epoch):
+    for epoch in range(args.train_epochs):
         scheduler.step()
         lr = scheduler.get_lr()[0]
         logging.info('\ntrain final Epoch: %d lr: %e', epoch, lr)
@@ -135,6 +140,7 @@ def main():
         valid_acc, valid_obj = infer(valid_queue, model, criterion, genotype)
         logging.info('valid acc: %f', valid_acc)
 
+    utils.save(model, os.path.join(args.exp_path, 'train_final.pt'))
     logging.info('train final end')
     logging.info('-' * 89)
     logging.info('-' * 89)
